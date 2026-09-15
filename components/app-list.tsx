@@ -18,18 +18,18 @@ export interface AppListItem {
   description?: string;
   logoUrl?: string | null;
   paid?: boolean;
-  /** Daily amount this business pays, in cents. Only shown when the list is
+  /** Monthly amount this business pays, in cents. Only shown when the list is
    *  rendered with `showAmounts` (owner dashboard) — never in the public view. */
-  amountCents?: number;
+  monthlyAmountCents?: number;
   /** Highlight this card as the logged-in owner's own business ("Tu negocio"). */
   isOwner?: boolean;
 }
 
-/** "$45/día" — integer dollars when round, 2 decimals otherwise. */
-function formatDailyAmount(cents: number): string {
+/** "$240/mes" — integer dollars when round, 2 decimals otherwise. */
+function formatMonthlyAmount(cents: number): string {
   const dollars = cents / 100;
   const value = Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
-  return `$${value}/día`;
+  return `$${value}/mes`;
 }
 
 // Positional hierarchy: the rank a row occupies in the list drives how
@@ -164,7 +164,7 @@ function AppRankCard({
   const panelId = useId();
   const summary = app.description ?? app.tagline;
   const showAmount =
-    showAmounts && app.paid && typeof app.amountCents === "number";
+    showAmounts && app.paid && typeof app.monthlyAmountCents === "number";
 
   return (
     <li
@@ -231,7 +231,7 @@ function AppRankCard({
             </span>
             {showAmount && (
               <span className="inline-flex items-center rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-2 py-0.5 text-xs font-semibold text-[#FBBF24]">
-                {formatDailyAmount(app.amountCents as number)}
+                {formatMonthlyAmount(app.monthlyAmountCents as number)}
               </span>
             )}
           </div>

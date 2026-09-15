@@ -56,7 +56,7 @@ export interface ApprovedAppRow {
   logoUrl: string;
   categoryName: string;
   plan: "free" | "paid";
-  amountCents: number;
+  monthlyAmountCents: number;
 }
 
 /** Approved apps + their category, shaped for the ranked list. Ordered by
@@ -73,7 +73,7 @@ export function getApprovedAppsWithCategory(): Promise<ApprovedAppRow[]> {
           logoUrl: apps.logoUrl,
           categoryName: categories.name,
           plan: apps.plan,
-          amountCents: apps.monthlyAmountCents,
+          monthlyAmountCents: apps.monthlyAmountCents,
         })
         .from(apps)
         .innerJoin(categories, eq(apps.categoryId, categories.id))

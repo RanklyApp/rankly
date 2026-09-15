@@ -1,132 +1,190 @@
 import type { AppListItem } from "@/components/app-list";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DEMO DATA — hardcoded sample ranking shared by BOTH the public landing and the
-// owner dashboard, so the two views always render the exact same set/order/tiers
-// from a single source. These are NOT real apps and do NOT come from the DB.
+// DEMO DATA — initial catalog of 19 real SaaS products, shared by both the
+// public landing and the owner dashboard.
 //
-// `amountCents` sits on the paid rows but is only revealed when a list is
-// rendered with `showAmounts` (owner dashboard); the public view leaves it off.
+// The three "Destacado" slots use clearly fictional placeholder apps so no
+// real company is misrepresented as a paying customer.
 //
-// Paid apps ("Destacado") come first — order = rank shown in the list. Delete
-// this file and its two imports (app/page.tsx, app/dashboard/page.tsx) when
-// wiring real data.
+// `monthlyAmountCents` = monthly amount in cents (matches AppListItem + formatMonthlyAmount).
+// Replace this file with real DB data once submission + moderation is wired.
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEMO_APPS: AppListItem[] = [
+  // ── Destacados (fictional placeholders — paid: true, highest to lowest) ───
   {
-    name: "Otterly",
-    tagline: "Transcribe tus reuniones y genera resúmenes automáticos",
+    name: "Loopwriter",
+    tagline: "Artículos SEO en piloto automático",
     description:
-      "Subís una grabación y Otterly la transcribe, separa por hablante y arma un resumen con los puntos clave y las tareas pendientes.",
-    category: "Transcripción",
-    url: "https://example.com",
-    paid: true,
-    amountCents: 5000, // $50/día
-  },
-  {
-    name: "Framely",
-    tagline: "Genera imágenes y assets de marca con IA en segundos",
-    description:
-      "Creá imágenes, íconos y piezas gráficas con la identidad de tu marca a partir de un prompt de texto, listas para exportar.",
-    category: "Generación de imágenes",
-    url: "https://example.com",
-    paid: true,
-    amountCents: 3500, // $35/día
-  },
-  {
-    name: "Copypilot",
-    tagline: "Escribí textos de marketing que convierten, en un clic",
-    description:
-      "Genera anuncios, emails y copy de landing optimizados para conversión, con variantes A/B en segundos.",
-    category: "Copywriting",
-    url: "https://example.com",
-  },
-  {
-    name: "DevMate",
-    tagline: "Autocompleta y explica código directo en tu editor",
-    description:
-      "Autocompletado y explicaciones de código dentro de tu editor, con contexto de todo el repositorio.",
-    category: "Código",
-    url: "https://example.com",
-  },
-  {
-    name: "Voxa",
-    tagline: "Convertí texto en voz natural en más de 30 idiomas",
-    description:
-      "Transformá cualquier texto en voz natural en más de 30 idiomas, con voces personalizables y clonado de voz.",
-    category: "Voz y audio",
-    url: "https://example.com",
-  },
-  {
-    name: "Noted",
-    tagline: "Notas inteligentes que se organizan y resumen solas",
-    description:
-      "Tomás notas y Noted las ordena por tema, las etiqueta y genera un resumen automático de cada sesión.",
-    category: "Productividad",
-    url: "https://example.com",
-  },
-  {
-    name: "Chatterbox",
-    tagline: "Agentes de atención al cliente que responden 24/7",
-    description:
-      "Agentes de soporte que responden a tus clientes las 24 horas con el tono de tu marca y escalan a un humano cuando hace falta.",
-    category: "Chatbots",
-    url: "https://example.com",
-  },
-  {
-    name: "Pixelmind",
-    tagline: "Editá y mejorá fotos con IA sin abrir Photoshop",
-    description:
-      "Recortá fondos, mejorá resolución y retocá fotos con IA desde el navegador, sin editores complejos.",
-    category: "Diseño",
-    url: "https://example.com",
-  },
-  {
-    name: "Datalens",
-    tagline: "Preguntale a tus datos en lenguaje natural y obtené gráficos",
-    description:
-      "Conectás tu base o planilla y le preguntás en lenguaje natural; Datalens responde con gráficos y tablas al instante.",
-    category: "Análisis de datos",
-    url: "https://example.com",
-  },
-  {
-    name: "Scribely",
-    tagline: "Redactá artículos largos con tono de marca consistente",
-    description:
-      "Redactá artículos y guías largas que mantienen el tono de tu marca, con estructura y SEO cuidados.",
+      "Genera y publica artículos SEO optimizados de forma automática, con tu tono de marca y estructura personalizable.",
     category: "Escritura",
     url: "https://example.com",
+    paid: true,
+    monthlyAmountCents: 24000,
   },
   {
-    name: "Translo",
-    tagline: "Traducí documentos completos manteniendo el formato",
+    name: "Tallyform AI",
+    tagline: "Formularios inteligentes que se adaptan solos",
     description:
-      "Traducí documentos enteros conservando formato, tablas e imágenes, en decenas de idiomas.",
-    category: "Traducción",
+      "Crea formularios que ajustan sus preguntas en tiempo real según las respuestas del usuario, con análisis automático.",
+    category: "Automatización",
     url: "https://example.com",
+    paid: true,
+    monthlyAmountCents: 18000,
   },
   {
-    name: "Slideforge",
-    tagline: "Convertí un brief en una presentación lista para exponer",
+    name: "Nudge Analytics",
+    tagline: "Entendé por qué tus usuarios se van",
     description:
-      "Pegás un brief o documento y Slideforge arma una presentación con diseño y estructura lista para exponer.",
-    category: "Presentaciones",
+      "Analítica de comportamiento que identifica los momentos de fricción y sugiere cambios accionables para reducir el churn.",
+    category: "Análisis de datos",
     url: "https://example.com",
+    paid: true,
+    monthlyAmountCents: 12000,
+  },
+  // ── Real apps — free ──────────────────────────────────────────────────────
+  {
+    name: "Rezi",
+    tagline: "El creador de currículums con IA #1",
+    description:
+      "Genera currículums optimizados para sistemas ATS, cartas de presentación y practica entrevistas con IA.",
+    category: "Escritura",
+    url: "https://www.rezi.ai",
   },
   {
-    name: "Recapio",
-    tagline: "Resúmenes de videos y podcasts en puntos clave",
+    name: "Bustem",
+    tagline: "Frená a los que copian tu marca",
     description:
-      "Pegás un link de video, reunión o podcast y Recapio devuelve un resumen en puntos clave accionables.",
-    category: "Resúmenes",
-    url: "https://example.com",
+      "Servicio de detección y remoción (DMCA) de sitios falsos, productos pirata y uso no autorizado de tu marca.",
+    category: "Automatización",
+    url: "https://bustem.com",
   },
   {
-    name: "Tunela",
-    tagline: "Generá música y pistas de fondo libres de derechos",
+    name: "Aplano",
+    tagline: "Turnos y fichaje de personal sin planillas",
     description:
-      "Generá música y pistas de fondo libres de derechos por estilo y duración para tus videos y proyectos.",
-    category: "Música y audio",
-    url: "https://example.com",
+      "Software de gestión de turnos, fichaje de horarios y ausencias para equipos que trabajan por turnos.",
+    category: "Productividad",
+    url: "https://www.getaplano.com",
+  },
+  {
+    name: "Kibu",
+    tagline: "Menos papeleo, más cuidado real",
+    description:
+      "Plataforma con IA para documentación, cumplimiento y contenido para proveedores de servicios a personas con discapacidad.",
+    category: "Productividad",
+    url: "https://kibu.com",
+  },
+  {
+    name: "Postiz",
+    tagline: "Redes sociales en piloto automático con IA",
+    description:
+      "Programa, genera y publica contenido en más de 30 redes sociales usando agentes de IA, todo en un calendario visual.",
+    category: "Automatización",
+    url: "https://postiz.com",
+  },
+  {
+    name: "Cometly",
+    tagline: "Sabé qué anuncio generó cada venta",
+    description:
+      "Atribución de marketing con IA para SaaS B2B: conecta cada click de anuncio con los ingresos reales en Stripe.",
+    category: "Análisis de datos",
+    url: "https://www.cometly.com",
+  },
+  {
+    name: "Supliful",
+    tagline: "Lanzá tu marca de suplementos sin inventario",
+    description:
+      "Plataforma de print-on-demand para vender suplementos, café y cosmética con tu propia marca, sin inventario.",
+    category: "Automatización",
+    url: "https://supliful.com",
+  },
+  {
+    name: "BIG",
+    tagline: "Convertí manejar tu negocio en un juego",
+    description:
+      "Plataforma que gamifica la gestión de tu negocio con metas, misiones y recompensas para mantenerte motivado.",
+    category: "Productividad",
+    url: "https://playrealbig.com",
+  },
+  {
+    name: "Upscale B2B",
+    tagline: "Generación de leads B2B, con prueba incluida",
+    description:
+      "Servicio gestionado de generación de leads B2B con período de prueba antes de contratar.",
+    category: "Automatización",
+    url: "https://upscaleb2b.com",
+  },
+  {
+    name: "Codédex",
+    tagline: "Aprendé a programar como una aventura",
+    description:
+      "Plataforma gamificada para aprender Python, HTML, CSS y JavaScript a tu ritmo, con misiones e insignias.",
+    category: "Código",
+    url: "https://www.codedex.io",
+  },
+  {
+    name: "Supergrow",
+    // TODO: copiar del sitio oficial
+    tagline: "",
+    description: "",
+    category: "Copywriting",
+    url: "https://www.supergrow.ai",
+  },
+  {
+    name: "LLM Gateway",
+    tagline: "Una sola API para más de 40 modelos de IA",
+    description:
+      "Conectá tu app a OpenAI, Anthropic, Google y 40+ proveedores de IA a través de una sola API unificada.",
+    category: "Código",
+    url: "https://llmgateway.io",
+  },
+  {
+    name: "Muxa",
+    tagline: "Convertí tus letras en canciones con IA",
+    description:
+      "App que genera canciones completas (letra, melodía y voz) a partir de un prompt o tus propias letras.",
+    category: "Voz y audio",
+    url: "https://apps.apple.com/us/app/muxa-ai-music-songmaker/id6503041526",
+  },
+  {
+    name: "Vid.ai",
+    tagline: "Videos profesionales sin editar nada",
+    description:
+      "Generador de video con IA: convierte texto en videos con voces, subtítulos y marca propia en minutos.",
+    category: "Video",
+    url: "https://vid.ai",
+  },
+  {
+    name: "GoTall",
+    tagline: "Predecí tu altura y trabajá para maximizarla",
+    description:
+      "App que predice tu altura adulta según genética, nutrición y ejercicio, y te da un plan personalizado para maximizarla.",
+    category: "Análisis de datos",
+    url: "https://www.gotall.app",
+  },
+  {
+    name: "Gojiberry AI",
+    tagline: "Tu agente de ventas que nunca duerme",
+    description:
+      "Agente de IA que encuentra leads con intención de compra y les hace outreach automático por email y redes.",
+    category: "Automatización",
+    url: "https://gojiberry.ai",
+  },
+  {
+    name: "Chatbase",
+    tagline: "Armá un chatbot con IA para tu web en minutos",
+    description:
+      "Creá un chatbot entrenado con tus propios datos para responder consultas de soporte y ventas en tu sitio.",
+    category: "Chatbots",
+    url: "https://www.chatbase.co",
+  },
+  {
+    name: "Stan Store",
+    tagline: "Tu tienda digital en un link",
+    description:
+      "Plataforma todo-en-uno para creadores: vendé cursos, coaching y productos digitales desde una sola página de link-in-bio.",
+    category: "Productividad",
+    url: "https://www.stan.store",
   },
 ];

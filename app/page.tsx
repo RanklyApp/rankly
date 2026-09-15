@@ -24,7 +24,7 @@ export default async function HomePage() {
     url: a.websiteUrl,
     logoUrl: a.logoUrl,
     paid: a.plan === "paid",
-    amountCents: a.plan === "paid" ? a.amountCents : undefined,
+    monthlyAmountCents: a.plan === "paid" ? a.monthlyAmountCents : undefined,
   }));
 
   const listApps: AppListItem[] = [...DEMO_APPS, ...realItems];

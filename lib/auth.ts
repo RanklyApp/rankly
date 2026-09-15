@@ -55,7 +55,7 @@ export interface OwnerAppRow {
   logoUrl: string;
   categoryName: string;
   plan: "free" | "paid";
-  amountCents: number;
+  monthlyAmountCents: number;
 }
 
 /** Approved apps owned by this user, with their category name (for the list). */
@@ -71,7 +71,7 @@ export async function getOwnerAppsWithCategory(
       logoUrl: apps.logoUrl,
       categoryName: categories.name,
       plan: apps.plan,
-      amountCents: apps.monthlyAmountCents,
+      monthlyAmountCents: apps.monthlyAmountCents,
     })
     .from(apps)
     .innerJoin(categories, eq(apps.categoryId, categories.id))

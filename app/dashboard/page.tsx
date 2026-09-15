@@ -33,7 +33,7 @@ export default async function DashboardPage() {
     url: a.websiteUrl,
     logoUrl: a.logoUrl,
     paid: a.plan === "paid",
-    amountCents: a.plan === "paid" ? a.amountCents : undefined,
+    monthlyAmountCents: a.plan === "paid" ? a.monthlyAmountCents : undefined,
     isOwner: true,
   }));
 
