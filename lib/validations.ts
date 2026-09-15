@@ -84,6 +84,14 @@ export const dailyAmountDollarsSchema = z
   .min(1, "Mínimo $1 por día")
   .max(100000, "Monto demasiado alto");
 
+/** Dashboard "destacar" bid entered by the owner. Same whole-dollar rule as
+ *  `dailyAmountDollarsSchema` but with a $5 floor (product minimum to promote). */
+export const bidDollarsSchema = z
+  .number({ error: "Ingresá un monto" })
+  .int("Solo montos en dólares enteros (sin centavos)")
+  .min(5, "El mínimo para destacar es $5 por día")
+  .max(100000, "Monto demasiado alto");
+
 /** Server-side guard for a cents value before it hits the DB. */
 export const dailyAmountCentsSchema = z
   .number()

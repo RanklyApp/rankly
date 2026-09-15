@@ -72,26 +72,24 @@ nada).
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cliente Supabase público |
 | `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor: subir logos a Storage. Bypassa RLS |
 | `NEXT_PUBLIC_SITE_URL` | Canonical, Open Graph, sitemap |
-| `ADMIN_USER` / `ADMIN_PASSWORD` | Basic Auth provisional del panel admin (Fase 2 lo reemplaza) |
 
 Antes de publicar apps con logo hay que crear un bucket **público** llamado
 `logos` en Supabase Storage.
 
 ## Cómo agregar una categoría
 
-Las categorías se administran desde el panel, no por código:
+La taxonomía es fija y vive en `db/seed.ts` (no hay panel de categorías):
 
-1. Configurá `ADMIN_USER` / `ADMIN_PASSWORD` en `.env.local`.
-2. Entrá a `/admin/categories` (te pide las credenciales Basic Auth).
-3. Completá **nombre**, **slug** (minúsculas y guiones, ej. `transcripcion`),
-   **descripción**, **ícono** (nombre de un ícono de
-   [Lucide](https://lucide.dev/icons), ej. `mic`, `image`, `code`), y
-   **SEO title / description**.
-4. Guardá. La categoría queda disponible en el formulario de alta, en
-   `/categorias` y en `/c/<slug>`.
+1. Editá el array de categorías en `db/seed.ts`: **nombre**, **slug**
+   (minúsculas y guiones, ej. `transcripcion`), **descripción**, **ícono**
+   (nombre de un ícono de [Lucide](https://lucide.dev/icons), ej. `mic`,
+   `image`, `code`) y **SEO title / description**.
+2. Corré `npm run db:seed` (idempotente: solo inserta los slugs nuevos).
 
-El ícono se resuelve en runtime con `DynamicIcon` de `lucide-react`, así que
-cualquier nombre válido de Lucide funciona sin tocar el código.
+La categoría queda disponible en el formulario de alta, en `/categorias` y en
+`/c/<slug>`. El ícono se resuelve en runtime con `DynamicIcon` de
+`lucide-react`, así que cualquier nombre válido de Lucide funciona sin tocar el
+código.
 
 ## Ordenación del listado — `rankApps`
 

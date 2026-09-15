@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, LayoutDashboard, LogOut, Plus } from "lucide-react";
+import { Eye, LayoutDashboard, LogIn, LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,9 +10,11 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
  * Auth-aware header CTA, used in the site header and on the landing.
- *  - Logged out → "Agregar negocio" (→ /submit, one-step signup).
+ *  - Logged out → "Iniciar sesión" (→ /acceder) + "Agregar negocio"
+ *                 (→ /submit, one-step signup).
  *  - Logged in  → a view toggle to jump between the owner dashboard and the
- *                 public view without logging out, plus "Salir".
+ *                 public view without logging out, plus "Salir". Owners always
+ *                 land on /dashboard, never on the submit form.
  *
  * Auth is checked client-side so public pages stay statically cacheable; the
  * toggle just appears after hydration for owners.
@@ -54,15 +56,27 @@ export function HeaderCta() {
     };
   }, []);
 
-  // Until we know, and when logged out, show the signup CTA (matches SSR).
+  // On the login page itself the top-banner CTA is noise ("Agregar negocio" /
+  // "Iniciar sesión" are redundant there) — hide it.
+  if (pathname === "/acceder") return null;
+
+  // Until we know, and when logged out, show login + signup CTAs (matches SSR).
   if (!loggedIn) {
     return (
-      <Button asChild variant="outline" size="sm">
-        <Link href="/submit">
-          <Plus className="size-4" aria-hidden />
-          Agregar negocio
-        </Link>
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/acceder">
+            <LogIn className="size-4" aria-hidden />
+            Iniciar sesión
+          </Link>
+        </Button>
+        <Button asChild variant="default" size="sm">
+          <Link href="/submit">
+            <Plus className="size-4" aria-hidden />
+            Agregar negocio
+          </Link>
+        </Button>
+      </div>
     );
   }
 

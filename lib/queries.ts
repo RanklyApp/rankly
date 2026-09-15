@@ -117,6 +117,42 @@ export function getApprovedAppsWithCategory(): Promise<ApprovedAppRow[]> {
   );
 }
 
+export interface AdminAppRow {
+  id: string;
+  name: string;
+  slug: string;
+  categoryName: string;
+  ownerEmail: string;
+  status: "pending" | "approved" | "rejected";
+  plan: "free" | "paid";
+  dailyAmountCents: number;
+  createdAt: Date;
+}
+
+/** Every business (any status) for the admin panel, newest first. Admin-only,
+ *  so no demo fallback — an unreachable DB yields an empty list. */
+export function getAllAppsForAdmin(): Promise<AdminAppRow[]> {
+  return safe(
+    () =>
+      getDb()
+        .select({
+          id: apps.id,
+          name: apps.name,
+          slug: apps.slug,
+          categoryName: categories.name,
+          ownerEmail: apps.ownerEmail,
+          status: apps.status,
+          plan: apps.plan,
+          dailyAmountCents: apps.dailyAmountCents,
+          createdAt: apps.createdAt,
+        })
+        .from(apps)
+        .innerJoin(categories, eq(apps.categoryId, categories.id))
+        .orderBy(desc(apps.createdAt)),
+    [],
+  );
+}
+
 export function getRecentApps(limit = 12): Promise<App[]> {
   return safe(
     () =>

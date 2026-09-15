@@ -56,6 +56,10 @@ export interface OwnerAppRow {
   categoryName: string;
   plan: "free" | "paid";
   dailyAmountCents: number;
+  /** Desired bid the owner picked (may be ahead of what's charged). */
+  desiredDailyAmountCents: number;
+  /** Null until the owner authorizes a Dodo mandate — no mandate = no charge. */
+  dodoSubscriptionId: string | null;
 }
 
 /** Approved apps owned by this user, with their category name (for the list). */
@@ -72,6 +76,8 @@ export async function getOwnerAppsWithCategory(
       categoryName: categories.name,
       plan: apps.plan,
       dailyAmountCents: apps.dailyAmountCents,
+      desiredDailyAmountCents: apps.desiredDailyAmountCents,
+      dodoSubscriptionId: apps.dodoSubscriptionId,
     })
     .from(apps)
     .innerJoin(categories, eq(apps.categoryId, categories.id))

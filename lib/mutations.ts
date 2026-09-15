@@ -81,6 +81,15 @@ export async function moderateApp(
     .where(eq(apps.id, appId));
 }
 
+/**
+ * Hard-deletes a business (admin action). FK cascades remove its events,
+ * billing_days and charges. Does NOT delete the owner's Supabase auth account
+ * (a separate concern) — only the business row.
+ */
+export async function deleteApp(appId: string): Promise<void> {
+  await getDb().delete(apps).where(eq(apps.id, appId));
+}
+
 interface CategoryData {
   name: string;
   slug: string;
