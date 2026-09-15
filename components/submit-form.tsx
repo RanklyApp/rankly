@@ -19,6 +19,10 @@ export function SubmitForm({ categories }: SubmitFormProps) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Controlled so the selected category is always what React holds — an
+  // uncontrolled select could submit an empty value in some browsers even after
+  // the user picked one (the "elegí una categoría pese a elegirla" bug).
+  const [categoryId, setCategoryId] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -27,13 +31,16 @@ export function SubmitForm({ categories }: SubmitFormProps) {
 
     const formEl = e.currentTarget;
     const formData = new FormData(formEl);
+    // Guarantee the category from React state reaches the request body,
+    // regardless of how the native <select> serialized.
+    formData.set("categoryId", categoryId);
 
     // Client-side Zod pass for instant feedback (server re-validates anyway).
     const check = submitAppSchema.safeParse({
       ownerEmail: formData.get("ownerEmail"),
       password: formData.get("password"),
       name: formData.get("name"),
-      categoryId: formData.get("categoryId"),
+      categoryId,
       websiteUrl: formData.get("websiteUrl"),
       description: formData.get("description"),
     });
@@ -123,7 +130,8 @@ export function SubmitForm({ categories }: SubmitFormProps) {
           id="categoryId"
           name="categoryId"
           required
-          defaultValue=""
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="" disabled>
