@@ -71,6 +71,30 @@ export const categorySchema = z.object({
 
 export type CategoryInput = z.infer<typeof categorySchema>;
 
+// --- Billing (daily bid) ---
+// Bids are WHOLE DOLLARS, no cents. This keeps every increase >= $1, which is
+// Dodo Payments' minimum charge — so a mid-day raise never produces a sub-$1
+// diff that Dodo would reject. Enforced here (input), and by the
+// `apps_daily_amount_whole_dollars` DB check (storage).
+
+/** Daily bid entered by the owner (slider/form), in whole dollars. */
+export const dailyAmountDollarsSchema = z
+  .number({ error: "Ingresá un monto" })
+  .int("Solo montos en dólares enteros (sin centavos)")
+  .min(1, "Mínimo $1 por día")
+  .max(100000, "Monto demasiado alto");
+
+/** Server-side guard for a cents value before it hits the DB. */
+export const dailyAmountCentsSchema = z
+  .number()
+  .int()
+  .min(0)
+  .refine((c) => c % 100 === 0, "El monto debe ser en dólares enteros (sin centavos)");
+
+export function dollarsToCents(dollars: number): number {
+  return Math.round(dollars) * 100;
+}
+
 /** URL-safe slug from arbitrary text. */
 export function slugify(input: string): string {
   return input

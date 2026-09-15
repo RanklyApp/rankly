@@ -15,6 +15,13 @@
       "when": 1789446909226,
       "tag": "0001_daily_amount_rename",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789450152156,
+      "tag": "0002_tired_hulk",
+      "breakpoints": true
     }
   ]
 }

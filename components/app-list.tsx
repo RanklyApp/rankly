@@ -24,11 +24,9 @@ export interface AppListItem {
   isOwner?: boolean;
 }
 
-/** "$240/día" — integer dollars when round, 2 decimals otherwise. */
+/** "$240/día" — bids are whole dollars, so always integer, no cents shown. */
 function formatDailyAmount(cents: number): string {
-  const dollars = cents / 100;
-  const value = Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
-  return `$${value}/día`;
+  return `$${Math.round(cents / 100)}/día`;
 }
 
 // Positional hierarchy: the rank a row occupies in the list drives how

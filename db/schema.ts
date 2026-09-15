@@ -1,5 +1,6 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   pgEnum,
@@ -63,7 +64,9 @@ export const apps = pgTable(
     ownerEmail: text("owner_email").notNull(),
     status: appStatusEnum("status").notNull().default("pending"),
     plan: appPlanEnum("plan").notNull().default("free"),
-    // Stored in cents to avoid floating-point money bugs.
+    // Stored in cents to avoid floating-point money bugs. Whole dollars only
+    // (multiple of 100) — see apps_daily_amount_whole_dollars check. Keeps every
+    // bid an integer $, so any mid-day increase is >= $1 (Dodo's min charge).
     dailyAmountCents: integer("daily_amount_cents").notNull().default(0),
     stripeSubscriptionId: text("stripe_subscription_id"),
     clicksCount: integer("clicks_count").notNull().default(0),
@@ -74,6 +77,8 @@ export const apps = pgTable(
   (t) => [
     index("apps_category_status_idx").on(t.categoryId, t.status),
     index("apps_status_idx").on(t.status),
+    // Daily bid must be a whole number of dollars (no cents).
+    check("apps_daily_amount_whole_dollars", sql`${t.dailyAmountCents} % 100 = 0`),
   ],
 );
 

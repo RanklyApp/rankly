@@ -1,0 +1,1 @@
+ALTER TABLE "apps" ADD CONSTRAINT "apps_daily_amount_whole_dollars" CHECK ("apps"."daily_amount_cents" % 100 = 0);
