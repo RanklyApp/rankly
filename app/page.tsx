@@ -1,10 +1,34 @@
 import { AppExplorer } from "@/components/app-explorer";
+import { type AppListItem } from "@/components/app-list";
 import { HeaderCta } from "@/components/header-cta";
 import { DarkGradientBg } from "@/components/ui/elegant-dark-pattern";
 import { SITE_DESCRIPTION } from "@/lib/constants";
 import { DEMO_APPS } from "@/lib/demo-apps";
+import { getApprovedAppsWithCategory } from "@/lib/queries";
 
-export default function HomePage() {
+// Fetch fresh so newly published businesses appear right away. (Can move to ISR
+// with a short revalidate later if the landing needs CDN caching.)
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  // Real approved businesses from the DB, appended to the demo ranking so the
+  // list stays populated while the directory fills up. Amounts stay private
+  // (no `showAmounts` on the public list). Remove DEMO_APPS here + in the
+  // dashboard when the directory has enough real data.
+  const real = await getApprovedAppsWithCategory();
+  const realItems: AppListItem[] = real.map((a) => ({
+    name: a.name,
+    tagline: a.tagline,
+    description: a.description,
+    category: a.categoryName,
+    url: a.websiteUrl,
+    logoUrl: a.logoUrl,
+    paid: a.plan === "paid",
+    amountCents: a.plan === "paid" ? a.amountCents : undefined,
+  }));
+
+  const listApps: AppListItem[] = [...DEMO_APPS, ...realItems];
+
   return (
     <DarkGradientBg className="min-h-screen">
       <div className="mx-auto max-w-4xl px-4">
@@ -26,7 +50,7 @@ export default function HomePage() {
           </div>
 
           {/* Search + category filter + ranked list (client, shares filter state) */}
-          <AppExplorer apps={DEMO_APPS} />
+          <AppExplorer apps={listApps} />
         </section>
       </div>
     </DarkGradientBg>

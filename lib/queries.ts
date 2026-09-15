@@ -48,6 +48,41 @@ export function getApprovedApps(): Promise<App[]> {
   );
 }
 
+export interface ApprovedAppRow {
+  name: string;
+  tagline: string;
+  description: string;
+  websiteUrl: string;
+  logoUrl: string;
+  categoryName: string;
+  plan: "free" | "paid";
+  amountCents: number;
+}
+
+/** Approved apps + their category, shaped for the ranked list. Ordered by
+ *  clicks then newest (real ranking wiring comes later). */
+export function getApprovedAppsWithCategory(): Promise<ApprovedAppRow[]> {
+  return safe(
+    () =>
+      getDb()
+        .select({
+          name: apps.name,
+          tagline: apps.tagline,
+          description: apps.description,
+          websiteUrl: apps.websiteUrl,
+          logoUrl: apps.logoUrl,
+          categoryName: categories.name,
+          plan: apps.plan,
+          amountCents: apps.monthlyAmountCents,
+        })
+        .from(apps)
+        .innerJoin(categories, eq(apps.categoryId, categories.id))
+        .where(eq(apps.status, "approved"))
+        .orderBy(desc(apps.clicksCount), desc(apps.createdAt)),
+    [],
+  );
+}
+
 export function getRecentApps(limit = 12): Promise<App[]> {
   return safe(
     () =>
