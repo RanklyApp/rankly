@@ -1,18 +1,38 @@
 import "server-only";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, lte, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import type { App, BillingDay } from "@/db/schema";
-import { chargeSavedMethod, isDodoConfigured } from "@/lib/billing/dodo";
+import type { App, BillingDay, Charge } from "@/db/schema";
+import { chargeMandate, findMandateForCustomer, isDodoConfigured } from "@/lib/billing/dodo";
 import { prorationChargeCents } from "@/lib/billing/proration";
 
 const { apps, billingDays, charges } = schema;
+
+const MAX_ATTEMPTS = 3;
+// Retry offsets from the charge's createdAt: attempt 1 immediate, 2 at +2h, 3 at +6h.
+const RETRY_OFFSET_HOURS: Record<number, number> = { 1: 2, 2: 6 };
 
 /** Today's UTC calendar day as 'YYYY-MM-DD' (matches the `date` column). */
 export function utcDay(d: Date = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Get today's billing_day for an app, creating it (pending) if missing. */
+/** Best-effort alert (cron/charge failures). Always logs; POSTs to
+ *  ALERT_WEBHOOK_URL if configured. Never throws. */
+async function alert(message: string, context?: Record<string, unknown>): Promise<void> {
+  console.error("[billing][ALERT]", message, context ? JSON.stringify(context) : "");
+  const url = process.env.ALERT_WEBHOOK_URL;
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source: "rankly-billing", message, context }),
+    });
+  } catch {
+    /* swallow — alerting must never break billing */
+  }
+}
+
 async function getOrCreateBillingDay(
   appId: string,
   day: string,
@@ -29,9 +49,7 @@ async function getOrCreateBillingDay(
   await db
     .insert(billingDays)
     .values({ appId, day, targetAmountCents: targetCents })
-    .onConflictDoNothing({
-      target: [billingDays.appId, billingDays.day],
-    });
+    .onConflictDoNothing({ target: [billingDays.appId, billingDays.day] });
   const rows = await db
     .select()
     .from(billingDays)
@@ -40,8 +58,8 @@ async function getOrCreateBillingDay(
   return rows[0]!;
 }
 
-/** True if a charge is still in flight for this app+day (Dodo rejects a second
- *  charge while one is processing, so we serialize per app). */
+/** True if a charge is still in flight for this billing day (Dodo rejects a
+ *  second charge while one is processing, so we serialize). */
 async function hasChargeInFlight(billingDayId: string): Promise<boolean> {
   const db = getDb();
   const rows = await db
@@ -58,14 +76,14 @@ async function hasChargeInFlight(billingDayId: string): Promise<boolean> {
 }
 
 export type FireResult =
-  | { ok: true; chargeId: string; paymentId: string; status: string }
-  | { ok: false; reason: "no_charge_needed" | "busy" | "not_configured" | "no_payment_method" | "error"; detail?: string };
+  | { ok: true; chargeId: string; paymentId: string }
+  | {
+      ok: false;
+      reason: "no_charge_needed" | "busy" | "not_configured" | "no_mandate" | "error";
+      detail?: string;
+    };
 
-/**
- * Insert a charge row (idempotent by key) and fire the off-session Dodo charge.
- * The webhook finalizes the money movement; if Dodo already returns 'succeeded'
- * we finalize immediately too (both paths are idempotent).
- */
+/** Insert a charge (idempotent by key) and fire the first off-session attempt. */
 async function createAndFireCharge(
   app: App,
   billingDay: BillingDay,
@@ -76,81 +94,99 @@ async function createAndFireCharge(
   const db = getDb();
 
   if (!isDodoConfigured()) return { ok: false, reason: "not_configured" };
-  if (!app.dodoCustomerId || !app.dodoPaymentMethodId || !app.dodoBillingCountry) {
-    return { ok: false, reason: "no_payment_method" };
-  }
+  if (!app.dodoSubscriptionId) return { ok: false, reason: "no_mandate" };
   if (await hasChargeInFlight(billingDay.id)) return { ok: false, reason: "busy" };
 
-  // Idempotency: if this exact charge was already created, don't double-charge.
   const dupe = await db
-    .select({ id: charges.id, dodoPaymentId: charges.dodoPaymentId, status: charges.status })
+    .select({ id: charges.id, dodoPaymentId: charges.dodoPaymentId })
     .from(charges)
     .where(eq(charges.idempotencyKey, idempotencyKey))
     .limit(1);
   if (dupe[0]) {
     return dupe[0].dodoPaymentId
-      ? { ok: true, chargeId: dupe[0].id, paymentId: dupe[0].dodoPaymentId, status: dupe[0].status }
+      ? { ok: true, chargeId: dupe[0].id, paymentId: dupe[0].dodoPaymentId }
       : { ok: false, reason: "busy" };
   }
 
   const inserted = await db
     .insert(charges)
-    .values({ appId: app.id, billingDayId: billingDay.id, kind, amountCents, idempotencyKey, status: "pending" })
+    .values({
+      appId: app.id,
+      billingDayId: billingDay.id,
+      kind,
+      amountCents,
+      idempotencyKey,
+      status: "pending",
+      attempts: 1,
+    })
     .onConflictDoNothing({ target: charges.idempotencyKey })
     .returning({ id: charges.id });
   const chargeId = inserted[0]?.id;
-  if (!chargeId) return { ok: false, reason: "busy" }; // lost the race — another request created it
+  if (!chargeId) return { ok: false, reason: "busy" }; // lost the race
 
+  return fireAttempt(app.dodoSubscriptionId, chargeId, amountCents, 1, {
+    app_id: app.id,
+    billing_day: billingDay.day,
+    charge_id: chargeId,
+    kind,
+  });
+}
+
+/** Fire (or re-fire) one Dodo attempt for an existing charge row. The Dodo
+ *  idempotency key includes the attempt number so a genuine retry isn't deduped. */
+async function fireAttempt(
+  subscriptionId: string,
+  chargeId: string,
+  amountCents: number,
+  attempt: number,
+  metadata: Record<string, string>,
+): Promise<FireResult> {
+  const db = getDb();
   try {
-    const res = await chargeSavedMethod({
-      customerId: app.dodoCustomerId,
-      paymentMethodId: app.dodoPaymentMethodId,
+    const res = await chargeMandate({
+      subscriptionId,
       amountCents,
-      billingCountry: app.dodoBillingCountry,
-      metadata: { app_id: app.id, billing_day: billingDay.day, charge_id: chargeId, kind },
+      metadata,
+      idempotencyKey: `${chargeId}:${attempt}`,
     });
-    // Settlement is async — mark processing; the webhook flips it to
-    // succeeded/failed and (only then) moves the ranking.
     await db
       .update(charges)
-      .set({ dodoPaymentId: res.paymentId, status: "processing", updatedAt: new Date() })
+      .set({ dodoPaymentId: res.paymentId, status: "processing", nextRetryAt: null, updatedAt: new Date() })
       .where(eq(charges.id, chargeId));
-    return { ok: true, chargeId, paymentId: res.paymentId, status: "processing" };
+    return { ok: true, chargeId, paymentId: res.paymentId };
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    await db.update(charges).set({ status: "failed", error: detail, updatedAt: new Date() }).where(eq(charges.id, chargeId));
+    // Treat an API error like a failed attempt so the retry schedule kicks in.
+    await handleAttemptFailure(chargeId, detail);
     return { ok: false, reason: "error", detail };
   }
 }
 
-/**
- * Daily base charge for one app (called by the cron). Ensures today's
- * billing_day exists with the app's desired bid as target, then charges the
- * proration diff (on a fresh day that's the full amount).
- */
+/** Daily base charge for one app (cron). Full amount on a fresh day; on a day
+ *  that already has confirmed charges, only the proration diff. */
 export async function runDailyChargeForApp(app: App): Promise<FireResult> {
   const target = app.desiredDailyAmountCents;
   if (target <= 0) return { ok: false, reason: "no_charge_needed" };
 
   const day = utcDay();
   const bd = await getOrCreateBillingDay(app.id, day, target);
-  // Keep target current in case the desired bid changed since the row was made.
   if (bd.targetAmountCents !== target) {
-    await getDb().update(billingDays).set({ targetAmountCents: target, updatedAt: new Date() }).where(eq(billingDays.id, bd.id));
+    await getDb()
+      .update(billingDays)
+      .set({ targetAmountCents: target, updatedAt: new Date() })
+      .where(eq(billingDays.id, bd.id));
     bd.targetAmountCents = target;
   }
 
   const toCharge = prorationChargeCents({ targetCents: target, alreadyChargedCents: bd.chargedAmountCents });
   if (toCharge <= 0) return { ok: false, reason: "no_charge_needed" };
-
   return createAndFireCharge(app, bd, "daily", toCharge, `daily:${app.id}:${day}`);
 }
 
 /**
- * Owner changed their bid (called later by the dashboard slider — NOT wired yet).
- * Sets the desired bid immediately. If it's a raise, charges the diff now; if a
- * drop, charges nothing (the drop applies to the next day's cron). Ranking only
- * moves when the diff charge confirms via webhook.
+ * Owner changed their bid (dashboard slider — NOT wired yet). Sets desired
+ * immediately; a raise charges the diff now, a drop charges nothing (applies to
+ * the next day's cron). Ranking only moves when the charge confirms.
  */
 export async function applyBidChange(appId: string, newDesiredCents: number): Promise<FireResult> {
   const db = getDb();
@@ -159,66 +195,182 @@ export async function applyBidChange(appId: string, newDesiredCents: number): Pr
   if (!app) return { ok: false, reason: "error", detail: "app not found" };
 
   await db.update(apps).set({ desiredDailyAmountCents: newDesiredCents }).where(eq(apps.id, appId));
-  app.desiredDailyAmountCents = newDesiredCents;
 
   const day = utcDay();
   const bd = await getOrCreateBillingDay(appId, day, newDesiredCents);
-  await db.update(billingDays).set({ targetAmountCents: newDesiredCents, updatedAt: new Date() }).where(eq(billingDays.id, bd.id));
+  await db
+    .update(billingDays)
+    .set({ targetAmountCents: newDesiredCents, updatedAt: new Date() })
+    .where(eq(billingDays.id, bd.id));
 
   const toCharge = prorationChargeCents({ targetCents: newDesiredCents, alreadyChargedCents: bd.chargedAmountCents });
-  if (toCharge <= 0) return { ok: false, reason: "no_charge_needed" }; // lowering or unchanged: nothing today
-
-  return createAndFireCharge(app, { ...bd, targetAmountCents: newDesiredCents }, "diff", toCharge, `diff:${appId}:${day}:${newDesiredCents}`);
+  if (toCharge <= 0) return { ok: false, reason: "no_charge_needed" };
+  return createAndFireCharge({ ...app, desiredDailyAmountCents: newDesiredCents }, bd, "diff", toCharge, `diff:${appId}:${day}:${newDesiredCents}`);
 }
 
-/** Webhook: a charge settled. Idempotent — safe to call repeatedly for the same
- *  Dodo payment id. Bumps the day's confirmed total and (only now) the app's
- *  effective ranking amount. */
-export async function markChargeSucceeded(dodoPaymentId: string): Promise<void> {
-  const db = getDb();
-  const rows = await db.select().from(charges).where(eq(charges.dodoPaymentId, dodoPaymentId)).limit(1);
-  const charge = rows[0];
-  if (!charge || charge.status === "succeeded") return; // unknown or already applied
+/** After the owner completes the mandate checkout, capture the resulting
+ *  on-demand subscription id (+ billing country) onto their app so we can charge
+ *  it off-session later. Called from the checkout return handler. */
+export async function captureMandate(
+  appId: string,
+  dodoCustomerId: string,
+): Promise<{ ok: boolean; subscriptionId?: string }> {
+  const mandate = await findMandateForCustomer(dodoCustomerId);
+  if (!mandate) return { ok: false };
+  await getDb()
+    .update(apps)
+    .set({
+      dodoSubscriptionId: mandate.subscriptionId,
+      dodoCustomerId,
+      dodoBillingCountry: mandate.billingCountry,
+    })
+    .where(eq(apps.id, appId));
+  return { ok: true, subscriptionId: mandate.subscriptionId };
+}
 
-  await db.update(charges).set({ status: "succeeded", updatedAt: new Date() }).where(eq(charges.id, charge.id));
+async function loadCharge(id: string): Promise<Charge | undefined> {
+  const rows = await getDb().select().from(charges).where(eq(charges.id, id)).limit(1);
+  return rows[0];
+}
+
+/** Resolve a charge from a webhook by Dodo payment id, falling back to the
+ *  charge id we put in metadata (covers a crash before we stored the payment id). */
+async function resolveCharge(dodoPaymentId?: string, chargeId?: string): Promise<Charge | undefined> {
+  const db = getDb();
+  if (dodoPaymentId) {
+    const byPay = await db.select().from(charges).where(eq(charges.dodoPaymentId, dodoPaymentId)).limit(1);
+    if (byPay[0]) return byPay[0];
+  }
+  if (chargeId) {
+    const byId = await loadCharge(chargeId);
+    if (byId && dodoPaymentId && !byId.dodoPaymentId) {
+      await db.update(charges).set({ dodoPaymentId, updatedAt: new Date() }).where(eq(charges.id, byId.id));
+    }
+    return byId;
+  }
+  return undefined;
+}
+
+/** Webhook: a charge settled. Idempotent. Bumps the day's confirmed total and
+ *  (only now) the app's effective ranking amount; clears any billing alert. */
+export async function markChargeSucceeded(dodoPaymentId?: string, chargeId?: string): Promise<void> {
+  const db = getDb();
+  const charge = await resolveCharge(dodoPaymentId, chargeId);
+  if (!charge || charge.status === "succeeded") return;
+
+  await db.update(charges).set({ status: "succeeded", nextRetryAt: null, updatedAt: new Date() }).where(eq(charges.id, charge.id));
 
   const bdRows = await db.select().from(billingDays).where(eq(billingDays.id, charge.billingDayId)).limit(1);
   const bd = bdRows[0];
   if (!bd) return;
   const newCharged = bd.chargedAmountCents + charge.amountCents;
-  const status = newCharged >= bd.targetAmountCents ? "active" : "pending";
   await db
     .update(billingDays)
-    .set({ chargedAmountCents: newCharged, status, updatedAt: new Date() })
+    .set({ chargedAmountCents: newCharged, status: newCharged >= bd.targetAmountCents ? "active" : "pending", updatedAt: new Date() })
     .where(eq(billingDays.id, bd.id));
 
-  // Ranking only moves now that money is confirmed.
-  await db.update(apps).set({ dailyAmountCents: newCharged, plan: "paid" }).where(eq(apps.id, charge.appId));
+  // Ranking rises only now that money is confirmed; clear any failure notice.
+  await db
+    .update(apps)
+    .set({ dailyAmountCents: newCharged, plan: "paid", billingAlertAt: null })
+    .where(eq(apps.id, charge.appId));
 }
 
-/** Webhook: a charge failed. Marks the charge; leaves ranking untouched. */
-export async function markChargeFailed(dodoPaymentId: string, error?: string): Promise<void> {
-  const db = getDb();
-  const rows = await db.select().from(charges).where(eq(charges.dodoPaymentId, dodoPaymentId)).limit(1);
-  const charge = rows[0];
+/** Webhook: a charge attempt failed. Schedules the next retry, or (after the
+ *  last attempt) drops the app to free and raises the dashboard notice. */
+export async function markChargeFailed(dodoPaymentId?: string, chargeId?: string, error?: string): Promise<void> {
+  const charge = await resolveCharge(dodoPaymentId, chargeId);
   if (!charge || charge.status === "succeeded") return;
-  await db.update(charges).set({ status: "failed", error: error ?? null, updatedAt: new Date() }).where(eq(charges.id, charge.id));
+  await handleAttemptFailure(charge.id, error ?? "payment failed");
 }
 
-/** Run the daily base charge for every eligible paying app. Called by the cron. */
-export async function runDailyBilling(): Promise<{ processed: number; charged: number; skipped: number; errors: number }> {
+async function handleAttemptFailure(chargeId: string, error: string): Promise<void> {
+  const db = getDb();
+  const charge = await loadCharge(chargeId);
+  if (!charge || charge.status === "succeeded") return;
+
+  if (charge.attempts >= MAX_ATTEMPTS) {
+    // Out of retries → drop to free for the day + notify the owner.
+    await db.update(charges).set({ status: "failed", error, nextRetryAt: null, updatedAt: new Date() }).where(eq(charges.id, charge.id));
+    await db.update(apps).set({ dailyAmountCents: 0, plan: "free", billingAlertAt: new Date() }).where(eq(apps.id, charge.appId));
+    await alert("charge failed after all retries — app dropped to free", { chargeId: charge.id, appId: charge.appId });
+    return;
+  }
+  const offsetH = RETRY_OFFSET_HOURS[charge.attempts] ?? 6;
+  const nextRetryAt = new Date(charge.createdAt.getTime() + offsetH * 3600_000);
+  await db.update(charges).set({ status: "failed", error, nextRetryAt, updatedAt: new Date() }).where(eq(charges.id, charge.id));
+}
+
+/** Re-fire a failed charge that's due for retry (cron self-healing). */
+async function retryCharge(charge: Charge): Promise<void> {
+  const db = getDb();
+  const appRows = await db.select().from(apps).where(eq(apps.id, charge.appId)).limit(1);
+  const app = appRows[0];
+  if (!app?.dodoSubscriptionId) return;
+  if (await hasChargeInFlight(charge.billingDayId)) return; // don't stack
+
+  const attempt = charge.attempts + 1;
+  await db.update(charges).set({ attempts: attempt, status: "pending", updatedAt: new Date() }).where(eq(charges.id, charge.id));
+  await fireAttempt(app.dodoSubscriptionId, charge.id, charge.amountCents, attempt, {
+    app_id: app.id,
+    billing_day: charge.billingDayId,
+    charge_id: charge.id,
+    kind: charge.kind,
+  });
+}
+
+/** Cron self-healing: re-fire failed charges whose retry time has arrived. */
+export async function processDueRetries(): Promise<number> {
+  const db = getDb();
+  const due = await db
+    .select()
+    .from(charges)
+    .where(
+      and(
+        eq(charges.status, "failed"),
+        lte(charges.attempts, MAX_ATTEMPTS - 1),
+        isNotNull(charges.nextRetryAt),
+        lte(charges.nextRetryAt, new Date()),
+      ),
+    );
+  for (const c of due) await retryCharge(c);
+  return due.length;
+}
+
+/** Run the daily base charge for every eligible paying app, then process any due
+ *  retries. Idempotent per app+day, so a re-run (self-healing) never double-charges. */
+export async function runDailyBilling(): Promise<{
+  processed: number;
+  charged: number;
+  skipped: number;
+  errors: number;
+  retried: number;
+}> {
   const db = getDb();
   const eligible = await db
     .select()
     .from(apps)
-    .where(and(eq(apps.status, "approved"), sql`${apps.desiredDailyAmountCents} > 0`, sql`${apps.dodoPaymentMethodId} is not null`));
+    .where(
+      and(
+        eq(apps.status, "approved"),
+        sql`${apps.desiredDailyAmountCents} > 0`,
+        isNotNull(apps.dodoSubscriptionId),
+      ),
+    );
 
   let charged = 0, skipped = 0, errors = 0;
   for (const app of eligible) {
-    const r = await runDailyChargeForApp(app);
-    if (r.ok) charged++;
-    else if (r.reason === "error") errors++;
-    else skipped++;
+    try {
+      const r = await runDailyChargeForApp(app);
+      if (r.ok) charged++;
+      else if (r.reason === "error") errors++;
+      else skipped++;
+    } catch (err) {
+      errors++;
+      await alert("daily charge threw", { appId: app.id, err: String(err) });
+    }
   }
-  return { processed: eligible.length, charged, skipped, errors };
+  const retried = await processDueRetries();
+  if (errors > 0) await alert("daily billing finished with errors", { errors, processed: eligible.length });
+  return { processed: eligible.length, charged, skipped, errors, retried };
 }

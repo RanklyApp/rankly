@@ -29,17 +29,23 @@ export async function POST(req: Request) {
   }
 
   try {
-    const paymentId = (event as { data?: { payment_id?: string } }).data?.payment_id;
+    const data = (event as { data?: { payment_id?: string; metadata?: Record<string, string> } }).data;
+    const paymentId = data?.payment_id;
+    // Reconciliation fallback: match by the charge id we set in metadata, in case
+    // we crashed before storing the Dodo payment id.
+    const chargeId = data?.metadata?.charge_id;
     switch (event.type) {
       case "payment.succeeded":
-        if (paymentId) await markChargeSucceeded(paymentId);
+        await markChargeSucceeded(paymentId, chargeId);
         break;
       case "payment.failed":
       case "payment.cancelled":
-        if (paymentId) await markChargeFailed(paymentId, event.type);
+        await markChargeFailed(paymentId, chargeId, event.type);
         break;
+      case "payment.processing":
       default:
-        // Other events (refunds, disputes, subscription.*) — not handled yet.
+        // processing = no-op (we already set processing on fire); others
+        // (refunds, disputes, subscription.*) not handled yet.
         break;
     }
   } catch (err) {

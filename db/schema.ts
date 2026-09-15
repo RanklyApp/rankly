@@ -96,12 +96,20 @@ export const apps = pgTable(
     desiredDailyAmountCents: integer("desired_daily_amount_cents")
       .notNull()
       .default(0),
-    // Dodo Payments linkage, captured from the customer's first (checkout) payment.
-    // The saved payment method lets us charge off-session afterwards (see
-    // lib/billing/dodo.ts). Null until the owner completes their first payment.
+    // Dodo Payments linkage, captured from the owner's first checkout (an
+    // on-demand subscription MANDATE — mandate_only). Off-session charges go
+    // through `subscriptions.charge(dodoSubscriptionId, ...)` (see
+    // lib/billing/dodo.ts). Null until the owner authorizes the mandate.
+    dodoSubscriptionId: text("dodo_subscription_id"),
     dodoCustomerId: text("dodo_customer_id"),
+    // Deprecated: the on-demand mandate model charges via dodoSubscriptionId, not
+    // a raw payment method. Kept (unused) to avoid a destructive migration.
     dodoPaymentMethodId: text("dodo_payment_method_id"),
     dodoBillingCountry: text("dodo_billing_country"), // ISO 3166-1 alpha-2
+    // Set when a day's charge finally failed after all retries (owner dropped to
+    // free). Drives the "no pudimos cobrarte" dashboard notice; cleared on the
+    // next successful charge.
+    billingAlertAt: timestamp("billing_alert_at", { withTimezone: true }),
     stripeSubscriptionId: text("stripe_subscription_id"),
     clicksCount: integer("clicks_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -191,6 +199,11 @@ export const charges = pgTable(
     status: chargeStatusEnum("status").notNull().default("pending"),
     dodoPaymentId: text("dodo_payment_id").unique(),
     idempotencyKey: text("idempotency_key").notNull().unique(),
+    // Retry policy: up to 3 attempts (immediate, +2h, +6h from createdAt); after
+    // the last failure the app drops to free. nextRetryAt is when the cron should
+    // re-fire (null = no retry pending / done).
+    attempts: integer("attempts").notNull().default(0),
+    nextRetryAt: timestamp("next_retry_at", { withTimezone: true }),
     error: text("error"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

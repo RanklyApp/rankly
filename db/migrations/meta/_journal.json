@@ -36,6 +36,13 @@
       "when": 1789450855346,
       "tag": "0004_unknown_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789482642373,
+      "tag": "0005_nice_katie_power",
+      "breakpoints": true
     }
   ]
 }
