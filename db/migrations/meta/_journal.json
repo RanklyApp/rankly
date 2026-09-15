@@ -22,6 +22,20 @@
       "when": 1789450152156,
       "tag": "0002_tired_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789450741826,
+      "tag": "0003_robust_salo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789450855346,
+      "tag": "0004_unknown_professor_monster",
+      "breakpoints": true
     }
   ]
 }

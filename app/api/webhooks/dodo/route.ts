@@ -1,0 +1,52 @@
+import { NextResponse } from "next/server";
+import { verifyDodoWebhook } from "@/lib/billing/dodo";
+import { markChargeFailed, markChargeSucceeded } from "@/lib/billing/service";
+
+// Node runtime: signature verification needs Node crypto, and we read the raw
+// body for the Standard-Webhooks HMAC.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * Dodo Payments webhook. Standard Webhooks signature (headers webhook-id /
+ * webhook-signature / webhook-timestamp), verified by the SDK's unwrap(). This
+ * is the source of truth that money moved — the ranking rises only from here.
+ */
+export async function POST(req: Request) {
+  const raw = await req.text();
+  const headers = {
+    "webhook-id": req.headers.get("webhook-id") ?? "",
+    "webhook-signature": req.headers.get("webhook-signature") ?? "",
+    "webhook-timestamp": req.headers.get("webhook-timestamp") ?? "",
+  };
+
+  let event;
+  try {
+    event = verifyDodoWebhook(raw, headers);
+  } catch {
+    // Bad/forged signature — reject. Do not process.
+    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+  }
+
+  try {
+    const paymentId = (event as { data?: { payment_id?: string } }).data?.payment_id;
+    switch (event.type) {
+      case "payment.succeeded":
+        if (paymentId) await markChargeSucceeded(paymentId);
+        break;
+      case "payment.failed":
+      case "payment.cancelled":
+        if (paymentId) await markChargeFailed(paymentId, event.type);
+        break;
+      default:
+        // Other events (refunds, disputes, subscription.*) — not handled yet.
+        break;
+    }
+  } catch (err) {
+    // Signature was valid but processing failed — 500 so Dodo retries.
+    console.error("[webhooks/dodo] processing error:", err);
+    return NextResponse.json({ error: "processing failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ received: true });
+}

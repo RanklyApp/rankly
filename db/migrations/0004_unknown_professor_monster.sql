@@ -1,0 +1,2 @@
+ALTER TABLE "apps" ADD COLUMN "desired_daily_amount_cents" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "apps" ADD CONSTRAINT "apps_desired_amount_whole_dollars" CHECK ("apps"."desired_daily_amount_cents" % 100 = 0);
