@@ -5,7 +5,7 @@ import { rankApps, type RankableApp } from "@/lib/rank";
 function app(overrides: Partial<RankableApp> & { id: string }): RankableApp {
   return {
     plan: "free",
-    monthlyAmountCents: 0,
+    dailyAmountCents: 0,
     clicksCount: 0,
     createdAt: new Date("2025-01-01T00:00:00Z"),
     ...overrides,
@@ -30,7 +30,7 @@ describe("rankApps", () => {
   it("puts a single paid app on top regardless of its clicks", () => {
     const apps = [
       app({ id: "free-hi", clicksCount: 999 }),
-      app({ id: "paid", plan: "paid", monthlyAmountCents: 5000, clicksCount: 0 }),
+      app({ id: "paid", plan: "paid", dailyAmountCents: 5000, clicksCount: 0 }),
       app({ id: "free-lo", clicksCount: 10 }),
     ];
 
@@ -47,13 +47,13 @@ describe("rankApps", () => {
       app({
         id: "older",
         plan: "paid",
-        monthlyAmountCents: 3000,
+        dailyAmountCents: 3000,
         createdAt: new Date("2025-01-01T00:00:00Z"),
       }),
       app({
         id: "newer",
         plan: "paid",
-        monthlyAmountCents: 3000,
+        dailyAmountCents: 3000,
         createdAt: new Date("2025-06-01T00:00:00Z"),
       }),
     ];
@@ -70,7 +70,7 @@ describe("rankApps", () => {
         id: `p${i}`,
         plan: "paid",
         // Descending amounts: p0 highest ... p6 lowest.
-        monthlyAmountCents: (7 - i) * 1000,
+        dailyAmountCents: (7 - i) * 1000,
       }),
     );
     const free = [app({ id: "f0", clicksCount: 5 })];
@@ -87,7 +87,7 @@ describe("rankApps", () => {
 
       expect(promoted).toHaveLength(maxPromoted);
       // Promoted block stays sorted by amount DESC.
-      const amounts = promoted.map((a) => a.monthlyAmountCents);
+      const amounts = promoted.map((a) => a.dailyAmountCents);
       expect(amounts).toEqual([...amounts].sort((x, y) => y - x));
       // Overflow paid (2 of them) + the free app land in organic.
       expect(organic).toHaveLength(3);
@@ -104,7 +104,7 @@ describe("rankApps", () => {
 
   it("is deterministic for a given offset", () => {
     const all = Array.from({ length: 8 }, (_, i) =>
-      app({ id: `p${i}`, plan: "paid", monthlyAmountCents: (8 - i) * 100 }),
+      app({ id: `p${i}`, plan: "paid", dailyAmountCents: (8 - i) * 100 }),
     );
 
     const a = rankApps(all, { offset: 3, maxPromoted: 5 });

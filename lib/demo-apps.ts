@@ -1,51 +1,24 @@
 import type { AppListItem } from "@/components/app-list";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DEMO DATA — initial catalog of 19 real SaaS products, shared by both the
-// public landing and the owner dashboard.
+// DEMO DATA — catalog of real SaaS products, shared by the public landing and
+// the owner dashboard. No fictional/placeholder apps (see AGENTS.md: never fake
+// data). Real approved businesses from the DB are appended to this list.
 //
-// The three "Destacado" slots use clearly fictional placeholder apps so no
-// real company is misrepresented as a paying customer.
+// PLACEHOLDER "Destacado" AMOUNTS — TEMPORARY, remove when real billing (Polar)
+// starts. A few real apps below carry `paid: true` + an EXAMPLE `dailyAmountCents`
+// only so the promoted podium renders before anyone actually pays. These are NOT
+// real advertisers and pay nothing. When a business starts paying for real, drop
+// its `paid`/`dailyAmountCents` here (the amount will come from the DB instead):
+//   - Rezi     → dailyAmountCents 800 ($8/día) — well-known #1 resume builder
+//   - Chatbase → dailyAmountCents 500 ($5/día) — popular, distinct category (Chatbots)
+//   - Cometly  → dailyAmountCents 300 ($3/día) — surfaces the new Marketing y SEO cat
+// Picked for name recognition + category spread so the podium looks representative.
 //
-// `monthlyAmountCents` = monthly amount in cents (matches AppListItem + formatMonthlyAmount).
+// `dailyAmountCents` = daily amount in cents (matches AppListItem + formatDailyAmount).
 // Replace this file with real DB data once submission + moderation is wired.
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEMO_APPS: AppListItem[] = [
-  // ── Destacados (fictional placeholders — paid: true, highest to lowest) ───
-  {
-    name: "Loopwriter",
-    tagline: "Artículos SEO en piloto automático",
-    description:
-      "Genera y publica artículos SEO optimizados de forma automática, con tu tono de marca y estructura personalizable.",
-    category: "Escritura",
-    url: "https://example.com",
-    logoUrl: "/logos/loopwriter.svg",
-    paid: true,
-    monthlyAmountCents: 24000,
-  },
-  {
-    name: "Tallyform AI",
-    tagline: "Formularios inteligentes que se adaptan solos",
-    description:
-      "Crea formularios que ajustan sus preguntas en tiempo real según las respuestas del usuario, con análisis automático.",
-    category: "Automatización",
-    url: "https://example.com",
-    logoUrl: "/logos/tallyform-ai.svg",
-    paid: true,
-    monthlyAmountCents: 18000,
-  },
-  {
-    name: "Nudge Analytics",
-    tagline: "Entendé por qué tus usuarios se van",
-    description:
-      "Analítica de comportamiento que identifica los momentos de fricción y sugiere cambios accionables para reducir el churn.",
-    category: "Análisis de datos",
-    url: "https://example.com",
-    logoUrl: "/logos/nudge-analytics.svg",
-    paid: true,
-    monthlyAmountCents: 12000,
-  },
-  // ── Real apps — free ──────────────────────────────────────────────────────
   {
     name: "Rezi",
     tagline: "El creador de currículums con IA #1",
@@ -53,6 +26,28 @@ export const DEMO_APPS: AppListItem[] = [
       "Genera currículums optimizados para sistemas ATS, cartas de presentación y practica entrevistas con IA.",
     category: "Escritura",
     url: "https://www.rezi.ai",
+    paid: true, // PLACEHOLDER destacado — remove when real billing starts
+    dailyAmountCents: 800,
+  },
+  {
+    name: "Chatbase",
+    tagline: "Armá un chatbot con IA para tu web en minutos",
+    description:
+      "Creá un chatbot entrenado con tus propios datos para responder consultas de soporte y ventas en tu sitio.",
+    category: "Chatbots",
+    url: "https://www.chatbase.co",
+    paid: true, // PLACEHOLDER destacado — remove when real billing starts
+    dailyAmountCents: 500,
+  },
+  {
+    name: "Cometly",
+    tagline: "Sabé qué anuncio generó cada venta",
+    description:
+      "Atribución de marketing con IA para SaaS B2B: conecta cada click de anuncio con los ingresos reales en Stripe.",
+    category: "Marketing y SEO",
+    url: "https://www.cometly.com",
+    paid: true, // PLACEHOLDER destacado — remove when real billing starts
+    dailyAmountCents: 300,
   },
   {
     name: "Bustem",
@@ -83,23 +78,15 @@ export const DEMO_APPS: AppListItem[] = [
     tagline: "Redes sociales en piloto automático con IA",
     description:
       "Programa, genera y publica contenido en más de 30 redes sociales usando agentes de IA, todo en un calendario visual.",
-    category: "Automatización",
+    category: "Redes sociales",
     url: "https://postiz.com",
-  },
-  {
-    name: "Cometly",
-    tagline: "Sabé qué anuncio generó cada venta",
-    description:
-      "Atribución de marketing con IA para SaaS B2B: conecta cada click de anuncio con los ingresos reales en Stripe.",
-    category: "Análisis de datos",
-    url: "https://www.cometly.com",
   },
   {
     name: "Supliful",
     tagline: "Lanzá tu marca de suplementos sin inventario",
     description:
       "Plataforma de print-on-demand para vender suplementos, café y cosmética con tu propia marca, sin inventario.",
-    category: "Automatización",
+    category: "E-commerce",
     url: "https://supliful.com",
   },
   {
@@ -115,7 +102,7 @@ export const DEMO_APPS: AppListItem[] = [
     tagline: "Generación de leads B2B, con prueba incluida",
     description:
       "Servicio gestionado de generación de leads B2B con período de prueba antes de contratar.",
-    category: "Automatización",
+    category: "Ventas y leads",
     url: "https://upscaleb2b.com",
   },
   {
@@ -163,7 +150,7 @@ export const DEMO_APPS: AppListItem[] = [
     tagline: "Predecí tu altura y trabajá para maximizarla",
     description:
       "App que predice tu altura adulta según genética, nutrición y ejercicio, y te da un plan personalizado para maximizarla.",
-    category: "Análisis de datos",
+    category: "Salud y bienestar",
     url: "https://www.gotall.app",
   },
   {
@@ -171,16 +158,8 @@ export const DEMO_APPS: AppListItem[] = [
     tagline: "Tu agente de ventas que nunca duerme",
     description:
       "Agente de IA que encuentra leads con intención de compra y les hace outreach automático por email y redes.",
-    category: "Automatización",
+    category: "Ventas y leads",
     url: "https://gojiberry.ai",
-  },
-  {
-    name: "Chatbase",
-    tagline: "Armá un chatbot con IA para tu web en minutos",
-    description:
-      "Creá un chatbot entrenado con tus propios datos para responder consultas de soporte y ventas en tu sitio.",
-    category: "Chatbots",
-    url: "https://www.chatbase.co",
   },
   {
     name: "Stan Store",
@@ -189,5 +168,13 @@ export const DEMO_APPS: AppListItem[] = [
       "Plataforma todo-en-uno para creadores: vendé cursos, coaching y productos digitales desde una sola página de link-in-bio.",
     category: "Productividad",
     url: "https://www.stan.store",
+  },
+  {
+    name: "AEO Engine",
+    tagline: "Que la IA te cite, no solo Google",
+    description:
+      "Herramienta de optimización para que tu marca aparezca citada en ChatGPT, Perplexity y AI Overviews de Google, además del SEO tradicional.",
+    category: "Marketing y SEO",
+    url: "https://aeoengine.ai",
   },
 ];

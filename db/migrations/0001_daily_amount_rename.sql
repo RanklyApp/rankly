@@ -1,0 +1,1 @@
+ALTER TABLE "apps" RENAME COLUMN "monthly_amount_cents" TO "daily_amount_cents";

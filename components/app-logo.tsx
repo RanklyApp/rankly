@@ -60,20 +60,29 @@ interface AppLogoProps {
 export function AppLogo({ name, logoUrl, url, size = 40, className }: AppLogoProps) {
   const [faviconFailed, setFaviconFailed] = useState(false);
 
-  const dimension = { width: size, height: size };
-  const sharedStyle = { ...dimension, borderRadius: 12 };
+  // Circular container: overflow:hidden clips square logos to a perfect circle so
+  // the original square/dark corners never poke out. The subtle light fill shows
+  // through transparent logos instead of a black hole.
+  const container = {
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    overflow: "hidden" as const,
+    backgroundColor: "#f1f5f9", // gris claro de relleno
+  };
+  // object-cover fills the whole circle without distortion.
+  const imgStyle = { width: "100%", height: "100%", objectFit: "cover" as const };
 
   // 1. Explicit upload
   if (logoUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={logoUrl}
-        alt={`Logo de ${name}`}
-        style={sharedStyle}
-        loading="lazy"
-        className={cn("shrink-0 border border-border object-cover", className)}
-      />
+      <span
+        style={container}
+        className={cn("inline-flex shrink-0 border border-border", className)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoUrl} alt={`Logo de ${name}`} style={imgStyle} loading="lazy" />
+      </span>
     );
   }
 
@@ -85,26 +94,30 @@ export function AppLogo({ name, logoUrl, url, size = 40, className }: AppLogoPro
   // 2. Google favicon hotlink
   if (faviconUrl && !faviconFailed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={faviconUrl}
-        alt={`Logo de ${name}`}
-        style={sharedStyle}
-        loading="lazy"
-        referrerPolicy="no-referrer"
-        onError={() => setFaviconFailed(true)}
-        className={cn("shrink-0 border border-border object-cover", className)}
-      />
+      <span
+        style={container}
+        className={cn("inline-flex shrink-0 border border-border", className)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={faviconUrl}
+          alt={`Logo de ${name}`}
+          style={imgStyle}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setFaviconFailed(true)}
+        />
+      </span>
     );
   }
 
   // 3. Deterministic color avatar
   const bg = AVATAR_COLORS[hashName(name) % AVATAR_COLORS.length];
   return (
-    <div
-      style={{ ...sharedStyle, backgroundColor: bg }}
+    <span
+      style={{ ...container, backgroundColor: bg }}
       aria-hidden
-      className={cn("flex shrink-0 items-center justify-center", className)}
+      className={cn("inline-flex shrink-0 items-center justify-center", className)}
     >
       <span
         style={{ fontSize: Math.round(size * 0.35), fontWeight: 500, lineHeight: 1 }}
@@ -112,6 +125,6 @@ export function AppLogo({ name, logoUrl, url, size = 40, className }: AppLogoPro
       >
         {initials(name)}
       </span>
-    </div>
+    </span>
   );
 }

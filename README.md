@@ -5,7 +5,7 @@ funcionalidad ("necesito algo que transcriba reuniones"), navega por categoría 
 buscador, y sale hacia el dominio de la app. No se registra ni deja datos.
 
 Los dueños de las SaaS publican gratis (sin login, con moderación). Si además
-pagan una suscripción mensual, su ficha aparece por encima de las gratuitas y,
+pagan una suscripción diaria (prorrateada), su ficha aparece por encima de las gratuitas y,
 entre las pagas, ordena de mayor a menor importe. **El sitio funciona completo
 con cero apps y cero clientes pagos**: la capa de pago se enciende arriba de un
 catálogo que ya anda solo.
@@ -97,7 +97,7 @@ cualquier nombre válido de Lucide funciona sin tocar el código.
 
 Función pura y testeada en `lib/rank.ts`:
 
-- **Bloque pagado**: `plan === 'paid'`, ordenado por `monthlyAmountCents` DESC.
+- **Bloque pagado**: `plan === 'paid'`, ordenado por `dailyAmountCents` DESC.
   Topeado en `MAX_PROMOTED` (default 5). Si hay más pagas que el tope, una
   ventana rotatoria (parámetro `offset`) elige cuáles se muestran, para que
   todas tengan exposición con el tiempo. Las pagas que se pasan del tope caen al
@@ -117,7 +117,7 @@ entre revalidaciones. Tests: `pnpm test`.
   romper la página. Todas las rutas (`/`, `/c/[slug]`, `/app/[slug]`, `/buscar`)
   son navegables sin Supabase. Con DB, los datos demo se usan solo como relleno
   inicial hasta que el catálogo real crezca.
-- **Plata en centavos**: `monthlyAmountCents` es `integer` para evitar bugs de
+- **Plata en centavos**: `dailyAmountCents` es `integer` para evitar bugs de
   punto flotante con dinero.
 - **Salida rastreada**: `/go/[slug]` registra el clic (evento + `clicks_count`) y
   hace 302 al sitio; el enlace visible lleva `rel="sponsored nofollow"` y `/go`

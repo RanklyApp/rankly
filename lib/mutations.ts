@@ -64,7 +64,7 @@ export async function createApp(input: CreateAppInput): Promise<App> {
       slug,
       status: "approved",
       plan: "free",
-      monthlyAmountCents: 0,
+      dailyAmountCents: 0,
     })
     .returning();
   return row;

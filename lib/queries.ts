@@ -79,7 +79,7 @@ export interface ApprovedAppRow {
   logoUrl: string;
   categoryName: string;
   plan: "free" | "paid";
-  monthlyAmountCents: number;
+  dailyAmountCents: number;
 }
 
 /** Approved apps + their category, shaped for the ranked list. Ordered by
@@ -96,7 +96,7 @@ export function getApprovedAppsWithCategory(): Promise<ApprovedAppRow[]> {
           logoUrl: apps.logoUrl,
           categoryName: categories.name,
           plan: apps.plan,
-          monthlyAmountCents: apps.monthlyAmountCents,
+          dailyAmountCents: apps.dailyAmountCents,
         })
         .from(apps)
         .innerJoin(categories, eq(apps.categoryId, categories.id))
@@ -112,7 +112,7 @@ export function getApprovedAppsWithCategory(): Promise<ApprovedAppRow[]> {
         logoUrl: a.logoUrl,
         categoryName: a.category.name,
         plan: a.plan,
-        monthlyAmountCents: a.monthlyAmountCents,
+        dailyAmountCents: a.dailyAmountCents,
       })),
   );
 }

@@ -7,7 +7,7 @@ import { MAX_PROMOTED } from "./constants";
 export interface RankableApp {
   id: string;
   plan: "free" | "paid";
-  monthlyAmountCents: number;
+  dailyAmountCents: number;
   clicksCount: number;
   createdAt: Date | string;
 }
@@ -38,8 +38,8 @@ function toTime(value: Date | string): number {
 
 /** Amount DESC, then newest first, then id ASC for a stable total order. */
 function byPaidRank(a: RankableApp, b: RankableApp): number {
-  if (b.monthlyAmountCents !== a.monthlyAmountCents) {
-    return b.monthlyAmountCents - a.monthlyAmountCents;
+  if (b.dailyAmountCents !== a.dailyAmountCents) {
+    return b.dailyAmountCents - a.dailyAmountCents;
   }
   const t = toTime(b.createdAt) - toTime(a.createdAt);
   return t !== 0 ? t : a.id.localeCompare(b.id);
@@ -58,7 +58,7 @@ function byOrganicRank(a: RankableApp, b: RankableApp): number {
  * Rank apps for a listing.
  *
  * Rules (see spec):
- *  - Promoted block: plan === 'paid', ordered by monthlyAmountCents DESC.
+ *  - Promoted block: plan === 'paid', ordered by dailyAmountCents DESC.
  *    Capped at maxPromoted. When more paid apps exist than the cap, a rotating
  *    window (driven by `offset`) selects which ones appear, so all paid apps
  *    get exposure over time. Overflow paid apps fall into the organic block

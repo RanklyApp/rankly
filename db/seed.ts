@@ -154,6 +154,66 @@ const CATEGORIES: NewCategory[] = [
     seoDescription:
       "Apps de IA para automatizar flujos de trabajo e integrar tus herramientas.",
   },
+  {
+    slug: "redes-sociales",
+    name: "Redes sociales",
+    description:
+      "Herramientas para crear, programar y gestionar contenido en redes sociales.",
+    icon: "share-2",
+    seoTitle: "Herramientas para redes sociales con IA",
+    seoDescription:
+      "Apps de IA para crear, programar y gestionar contenido en redes sociales.",
+  },
+  {
+    slug: "ventas-y-leads",
+    name: "Ventas y leads",
+    description:
+      "Herramientas para encontrar clientes potenciales y automatizar la prospección.",
+    icon: "target",
+    seoTitle: "Herramientas de ventas y leads con IA",
+    seoDescription:
+      "Apps de IA para encontrar leads, prospectar y automatizar el outreach de ventas.",
+  },
+  {
+    slug: "e-commerce",
+    name: "E-commerce",
+    description:
+      "Herramientas para vender productos online, dropshipping y marca blanca.",
+    icon: "shopping-cart",
+    seoTitle: "Herramientas de e-commerce con IA",
+    seoDescription:
+      "Apps de IA para vender online, dropshipping y lanzar tu marca sin inventario.",
+  },
+  {
+    slug: "recursos-humanos",
+    name: "Recursos humanos",
+    description:
+      "Herramientas para gestionar equipos, turnos, ausencias y personal.",
+    icon: "users",
+    seoTitle: "Herramientas de recursos humanos con IA",
+    seoDescription:
+      "Apps de IA para gestionar equipos, turnos, fichaje y ausencias del personal.",
+  },
+  {
+    slug: "salud-y-bienestar",
+    name: "Salud y bienestar",
+    description:
+      "Herramientas de seguimiento y mejora de hábitos de salud.",
+    icon: "heart-pulse",
+    seoTitle: "Herramientas de salud y bienestar con IA",
+    seoDescription:
+      "Apps de IA para seguir y mejorar tus hábitos de salud y bienestar.",
+  },
+  {
+    slug: "marketing-y-seo",
+    name: "Marketing y SEO",
+    description:
+      "Herramientas de posicionamiento, atribución y visibilidad online.",
+    icon: "megaphone",
+    seoTitle: "Herramientas de marketing y SEO con IA",
+    seoDescription:
+      "Apps de IA para posicionamiento, atribución y visibilidad online de tu marca.",
+  },
 ];
 
 async function seed() {

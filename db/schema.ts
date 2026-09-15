@@ -64,7 +64,7 @@ export const apps = pgTable(
     status: appStatusEnum("status").notNull().default("pending"),
     plan: appPlanEnum("plan").notNull().default("free"),
     // Stored in cents to avoid floating-point money bugs.
-    monthlyAmountCents: integer("monthly_amount_cents").notNull().default(0),
+    dailyAmountCents: integer("daily_amount_cents").notNull().default(0),
     stripeSubscriptionId: text("stripe_subscription_id"),
     clicksCount: integer("clicks_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })

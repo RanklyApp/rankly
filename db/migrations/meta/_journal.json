@@ -8,6 +8,13 @@
       "when": 1789413649134,
       "tag": "0000_good_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789446909226,
+      "tag": "0001_daily_amount_rename",
+      "breakpoints": true
     }
   ]
 }
