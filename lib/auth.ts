@@ -6,16 +6,22 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const { users, apps, categories } = schema;
 
-/** The current authenticated Supabase user (or null), from request cookies. */
+/** The current authenticated Supabase user (or null), from request cookies.
+ *  Returns null (instead of throwing) if Supabase env is missing/misconfigured,
+ *  so pages degrade to the logged-out state rather than crashing. */
 export async function getSessionUser(): Promise<{
   id: string;
   email: string | null;
 } | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user ? { id: user.id, email: user.email ?? null } : null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user ? { id: user.id, email: user.email ?? null } : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

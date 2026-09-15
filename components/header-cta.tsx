@@ -22,22 +22,35 @@ export function HeaderCta() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
     let active = true;
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        if (active) setLoggedIn(Boolean(data.user));
-      })
-      .catch(() => {
-        if (active) setLoggedIn(false);
-      });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) setLoggedIn(Boolean(session?.user));
-    });
+    let unsubscribe: (() => void) | undefined;
+
+    try {
+      // Throws if the NEXT_PUBLIC_SUPABASE_* env vars are missing (e.g. not set
+      // on the host). Degrade to the logged-out CTA instead of crashing the page.
+      const supabase = createSupabaseBrowserClient();
+      supabase.auth
+        .getUser()
+        .then(({ data }) => {
+          if (active) setLoggedIn(Boolean(data.user));
+        })
+        .catch(() => {
+          if (active) setLoggedIn(false);
+        });
+      const { data: sub } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          if (active) setLoggedIn(Boolean(session?.user));
+        },
+      );
+      unsubscribe = () => sub.subscription.unsubscribe();
+    } catch {
+      // Env missing → leave `loggedIn` at its null default, which already
+      // renders the logged-out CTA. (No synchronous setState in the effect.)
+    }
+
     return () => {
       active = false;
-      sub.subscription.unsubscribe();
+      unsubscribe?.();
     };
   }, []);
 
