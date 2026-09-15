@@ -101,7 +101,7 @@ Función pura y testeada en `lib/rank.ts`:
   Topeado en `MAX_PROMOTED` (default 5). Si hay más pagas que el tope, una
   ventana rotatoria (parámetro `offset`) elige cuáles se muestran, para que
   todas tengan exposición con el tiempo. Las pagas que se pasan del tope caen al
-  bloque orgánico ese load, **sin perder el badge "Destacado"**.
+  bloque orgánico ese load (siguen visibles, solo sin el lugar del podio).
 - **Bloque orgánico**: el resto, por `clicksCount` DESC y luego más recientes.
 - Sin apps pagas, degrada a orden puramente orgánico.
 

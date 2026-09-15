@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppGrid } from "@/components/app-grid";
 import { AppLogo } from "@/components/app-logo";
-import { PromotedBadge } from "@/components/promoted-badge";
 import { Button } from "@/components/ui/button";
 import { getApprovedApps, getAppBySlug, getRelatedApps } from "@/lib/queries";
 import {
@@ -98,7 +97,6 @@ export default async function AppPage({ params }: PageProps<"/app/[slug]">) {
             <h1 className="text-2xl font-semibold tracking-tight">
               {app.name}
             </h1>
-            {app.plan === "paid" && <PromotedBadge />}
           </div>
           <p className="mt-1 text-muted-foreground">{app.tagline}</p>
           <div className="mt-3">

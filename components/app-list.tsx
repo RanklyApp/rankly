@@ -5,7 +5,6 @@ import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useId, useState } from "react";
 import { AppLogo } from "@/components/app-logo";
-import { PromotedBadge } from "@/components/promoted-badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +36,7 @@ function formatDailyAmount(cents: number): string {
 // out; everything from #4 down shares one neutral "mid" style. A dimmed
 // "irrelevant" tier for #11+ will come back once paid placement is enabled —
 // for now the base is empty and there is no reason to make deep ranks feel
-// worse than the mid band. This is independent of the paid "Destacado" badge.
+// worse than the mid band. Paid apps are surfaced by their top position, not a label.
 type Tier = "gold" | "silver" | "bronze" | "mid";
 
 function tierForRank(rank: number): Tier {
@@ -218,7 +217,6 @@ function AppRankCard({
         <div className="min-w-0 flex-1 md:flex-none md:basis-64">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate font-semibold leading-tight">{app.name}</h3>
-            {app.paid && <PromotedBadge />}
             {app.isOwner && (
               <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                 Tu negocio

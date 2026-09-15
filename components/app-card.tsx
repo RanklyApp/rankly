@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AppLogo } from "@/components/app-logo";
-import { PromotedBadge } from "@/components/promoted-badge";
 import type { App } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +27,6 @@ export function AppCard({ app, categoryName, className }: AppCardProps) {
     >
       <div className="flex items-start justify-between gap-2">
         <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.websiteUrl} />
-        {isPaid && <PromotedBadge />}
       </div>
 
       <div className="min-w-0">

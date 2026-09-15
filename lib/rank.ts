@@ -62,7 +62,7 @@ function byOrganicRank(a: RankableApp, b: RankableApp): number {
  *    Capped at maxPromoted. When more paid apps exist than the cap, a rotating
  *    window (driven by `offset`) selects which ones appear, so all paid apps
  *    get exposure over time. Overflow paid apps fall into the organic block
- *    for that load (still visible, still carrying their "Destacado" badge).
+ *    for that load (still visible, just without the podium placement).
  *  - Organic block: everyone else, ordered by clicksCount DESC then newest.
  *
  * Pure and deterministic: no I/O, no Date.now. Same inputs -> same output.
