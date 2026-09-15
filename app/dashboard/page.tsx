@@ -135,27 +135,14 @@ export default async function DashboardPage() {
           />
         ) : (
           <>
-            <div className="mb-10 space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Destacá tu negocio
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Elegí cuánto pagar por día para subir en el ranking. Cuanto
-                  más alto el monto, mejor posición.
-                </p>
-              </div>
+            <div className="mb-10 space-y-8">
               {owned.map((a) => (
-                <div
-                  key={a.id}
-                  className="rounded-lg border border-border bg-card p-4"
-                >
-                  <p className="mb-3 font-medium">{a.name}</p>
+                <div key={a.id} className="flex flex-col items-center gap-3">
                   <BidForm
                     appId={a.id}
                     initialDollars={Math.round(a.desiredDailyAmountCents / 100)}
-                    hasMandate={Boolean(a.dodoSubscriptionId)}
                   />
+                  <p className="text-center font-medium text-white">{a.name}</p>
                 </div>
               ))}
             </div>

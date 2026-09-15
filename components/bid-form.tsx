@@ -1,103 +1,65 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { type BidState, setBidAction } from "@/app/dashboard/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { GlassAmountInput } from "@/components/glass-amount-input";
 
-const QUICK_AMOUNTS = [5, 10, 20] as const;
 const MIN_BID = 5;
 
 /**
- * Owner control to set the daily "destacar" bid for one business. A numeric
- * field (whole dollars, min $5) plus quick-pick buttons that fill it in.
- * `initialDollars` prefills the current desired amount; `hasMandate` toggles a
- * hint when there's no payment method wired yet.
+ * Owner control to set the daily "destacar" bid for one business, rendered as a
+ * single frosted-glass amount bubble. Autosaves on blur / Enter through the
+ * existing `setBidAction` server action (whole dollars, min $5 — unchanged).
+ * `initialDollars` prefills the current desired amount.
  */
 export function BidForm({
   appId,
   initialDollars,
-  hasMandate,
 }: {
   appId: string;
   initialDollars: number;
-  hasMandate: boolean;
 }) {
-  const initial: BidState = {};
-  const [state, action, pending] = useActionState(setBidAction, initial);
-  const [amount, setAmount] = useState(
-    initialDollars >= MIN_BID ? String(initialDollars) : "",
+  const [state, action, pending] = useActionState(
+    setBidAction,
+    {} as BidState,
   );
+  const [amount, setAmount] = useState(
+    initialDollars >= MIN_BID ? initialDollars : MIN_BID,
+  );
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Persist only when the value clears the minimum; below that we leave the
+  // server-side guard untouched and just don't fire.
+  const save = () => {
+    if (amount >= MIN_BID) formRef.current?.requestSubmit();
+  };
 
   return (
-    <form action={action} className="space-y-3">
+    <form ref={formRef} action={action} className="w-full">
       <input type="hidden" name="appId" value={appId} />
 
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="space-y-1.5">
-          <label
-            htmlFor={`amount-${appId}`}
-            className="block text-sm font-medium"
-          >
-            Monto por día (USD)
-          </label>
-          <div className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">$</span>
-            <Input
-              id={`amount-${appId}`}
-              name="amount"
-              type="number"
-              min={MIN_BID}
-              step={1}
-              inputMode="numeric"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder={String(MIN_BID)}
-              className="w-28"
-            />
-          </div>
-        </div>
-
-        <Button type="submit" disabled={pending}>
-          {pending ? "Guardando…" : "Guardar"}
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">Sugeridos:</span>
-        {QUICK_AMOUNTS.map((v) => (
-          <Button
-            key={v}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setAmount(String(v))}
-          >
-            ${v}
-          </Button>
-        ))}
-      </div>
-
-      <p className="text-xs text-muted-foreground">Mínimo ${MIN_BID} por día.</p>
+      <GlassAmountInput
+        name="amount"
+        value={amount}
+        onValueChange={setAmount}
+        disabled={pending}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            save();
+          }
+        }}
+      />
 
       {state.error && (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="mt-2 text-center text-sm text-destructive">
           {state.error}
         </p>
       )}
-      {state.ok && !state.notice && (
-        <p className="text-sm text-success">Monto actualizado.</p>
-      )}
-      {state.notice && (
-        <p className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground">
-          {state.notice}
-        </p>
-      )}
-      {!hasMandate && (
-        <p className="text-xs text-muted-foreground">
-          Todavía no configuraste un medio de pago: el monto queda guardado pero
-          no se cobra ni sube en el ranking hasta activarlo.
+      {state.ok && (
+        <p className="mt-2 text-center text-sm text-success">
+          Monto actualizado.
         </p>
       )}
     </form>
