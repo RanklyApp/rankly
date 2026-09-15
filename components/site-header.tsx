@@ -14,6 +14,7 @@ export function SiteHeader() {
   if (
     pathname === "/" ||
     pathname === "/submit" ||
+    pathname === "/acceder" ||
     pathname.startsWith("/dashboard")
   ) {
     return null;
