@@ -14,7 +14,6 @@ export async function generateUniqueSlug(text: string): Promise<string> {
   let n = 1;
 
   // Small loop; app names rarely collide more than a handful of times.
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const existing = await db
       .select({ id: apps.id })
@@ -29,23 +28,41 @@ export async function generateUniqueSlug(text: string): Promise<string> {
 
 interface CreateAppInput {
   name: string;
-  tagline: string;
-  description: string;
-  websiteUrl: string;
   categoryId: string;
+  websiteUrl: string;
   ownerEmail: string;
+  ownerUserId: string;
   logoUrl: string;
+  /** Optional detailed description from the form. */
+  description?: string;
 }
 
+/**
+ * Creates a business owned by `ownerUserId`, published immediately
+ * (status 'approved' — no moderation queue). The one-liner `tagline` is derived
+ * from the description (or name).
+ */
 export async function createApp(input: CreateAppInput): Promise<App> {
   const db = getDb();
   const slug = await generateUniqueSlug(input.name);
+  const description = input.description?.trim() ?? "";
+  // The listing one-liner: first line of the description, else the name.
+  // Kept <= 80 chars to fit the `tagline` column.
+  const tagline = (description || input.name).slice(0, 80);
+
   const [row] = await db
     .insert(apps)
     .values({
-      ...input,
+      name: input.name,
+      categoryId: input.categoryId,
+      websiteUrl: input.websiteUrl,
+      ownerEmail: input.ownerEmail,
+      ownerUserId: input.ownerUserId,
+      logoUrl: input.logoUrl,
+      description,
+      tagline,
       slug,
-      status: "pending",
+      status: "approved",
       plan: "free",
       monthlyAmountCents: 0,
     })

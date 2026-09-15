@@ -3,15 +3,21 @@
 import { Rocket } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HeaderCta } from "@/components/header-cta";
 import { SearchBar } from "@/components/search-bar";
-import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/constants";
 
 export function SiteHeader() {
   const pathname = usePathname();
-  // The home page has its own hero search — hide the header one there to avoid
-  // two stacked search bars. Keep it on every other page.
-  const showSearch = pathname !== "/";
+  // Bare pages render their own full-bleed background with no header/top border
+  // (landing, signup form, owner dashboard). Every other page keeps the header.
+  if (
+    pathname === "/" ||
+    pathname === "/submit" ||
+    pathname.startsWith("/dashboard")
+  ) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -28,22 +34,12 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        {showSearch && (
-          <div className="flex-1 sm:max-w-xl sm:mx-auto">
-            <SearchBar />
-          </div>
-        )}
-
-        <div className="hidden items-center gap-2 sm:ml-auto sm:flex">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/submit">Publicar app</Link>
-          </Button>
+        <div className="flex-1 sm:max-w-xl sm:mx-auto">
+          <SearchBar />
         </div>
 
-        <div className="sm:hidden">
-          <Button asChild variant="outline" size="sm" className="w-full">
-            <Link href="/submit">Publicar tu app</Link>
-          </Button>
+        <div className="sm:ml-auto">
+          <HeaderCta />
         </div>
       </div>
     </header>

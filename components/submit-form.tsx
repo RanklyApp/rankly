@@ -1,7 +1,6 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +15,10 @@ interface SubmitFormProps {
 type FieldErrors = Partial<Record<string, string[]>>;
 
 export function SubmitForm({ categories }: SubmitFormProps) {
+  const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,12 +30,12 @@ export function SubmitForm({ categories }: SubmitFormProps) {
 
     // Client-side Zod pass for instant feedback (server re-validates anyway).
     const check = submitAppSchema.safeParse({
-      name: formData.get("name"),
-      tagline: formData.get("tagline"),
-      description: formData.get("description"),
-      websiteUrl: formData.get("websiteUrl"),
-      categoryId: formData.get("categoryId"),
       ownerEmail: formData.get("ownerEmail"),
+      password: formData.get("password"),
+      name: formData.get("name"),
+      categoryId: formData.get("categoryId"),
+      websiteUrl: formData.get("websiteUrl"),
+      description: formData.get("description"),
     });
     if (!check.success) {
       setErrors(check.error.flatten().fieldErrors);
@@ -45,59 +44,81 @@ export function SubmitForm({ categories }: SubmitFormProps) {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/apps", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/apps", { method: "POST", body: formData });
       const data = await res.json();
       if (res.ok && data.ok) {
-        setDone(true);
-        formEl.reset();
+        // Account + business created and signed in — go straight to the panel.
+        router.push(data.redirect ?? "/dashboard");
+        router.refresh();
         return;
       }
       if (data.errors) setErrors(data.errors as FieldErrors);
       if (data.message) setMessage(data.message);
+      setSubmitting(false);
     } catch {
       setMessage("Hubo un problema de conexión. Probá de nuevo.");
-    } finally {
       setSubmitting(false);
     }
   }
 
-  if (done) {
-    return (
-      <div className="rounded-lg border border-success/30 bg-success/10 p-6">
-        <div className="flex items-center gap-2 text-success">
-          <CheckCircle2 className="size-5" aria-hidden />
-          <p className="font-medium">¡Recibimos tu app!</p>
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Queda en la cola de moderación. Cuando la aprobemos, va a aparecer en
-          el directorio.
-        </p>
-        <div className="mt-4 flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/">Volver al inicio</Link>
-          </Button>
-          <Button variant="ghost" onClick={() => setDone(false)}>
-            Publicar otra
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
-      <Field label="Nombre" name="name" error={errors.name}>
-        <Input id="name" name="name" required maxLength={60} />
+      {/* Honeypot: hidden from humans, catnip for bots. Rejected server-side. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-[-9999px] top-[-9999px] h-0 w-0 overflow-hidden"
+      >
+        <Label htmlFor="company">No completar este campo</Label>
+        <input
+          id="company"
+          name="company"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
+      <Field
+        label="Email"
+        name="ownerEmail"
+        hint="Con este email y tu contraseña vas a entrar a tu panel."
+        error={errors.ownerEmail}
+      >
+        <Input
+          id="ownerEmail"
+          name="ownerEmail"
+          type="email"
+          autoComplete="email"
+          required
+        />
       </Field>
 
       <Field
-        label="Categoría"
-        name="categoryId"
-        error={errors.categoryId}
+        label="Contraseña"
+        name="password"
+        hint="Mínimo 8 caracteres. La usás para volver a entrar a tu panel."
+        error={errors.password}
       >
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          minLength={8}
+          required
+        />
+      </Field>
+
+      <Field
+        label="Nombre público"
+        name="name"
+        hint="El nombre que se muestra en el ranking."
+        error={errors.name}
+      >
+        <Input id="name" name="name" required maxLength={60} />
+      </Field>
+
+      <Field label="Categoría" name="categoryId" error={errors.categoryId}>
         <select
           id="categoryId"
           name="categoryId"
@@ -116,24 +137,6 @@ export function SubmitForm({ categories }: SubmitFormProps) {
         </select>
       </Field>
 
-      <Field
-        label="Descripción de una línea"
-        name="tagline"
-        hint="Máximo 80 caracteres. Qué hace, en pocas palabras."
-        error={errors.tagline}
-      >
-        <Input id="tagline" name="tagline" required maxLength={80} />
-      </Field>
-
-      <Field
-        label="Descripción"
-        name="description"
-        hint="Contá qué resuelve y para quién."
-        error={errors.description}
-      >
-        <Textarea id="description" name="description" required rows={4} maxLength={600} />
-      </Field>
-
       <Field label="Sitio web" name="websiteUrl" error={errors.websiteUrl}>
         <Input
           id="websiteUrl"
@@ -145,9 +148,24 @@ export function SubmitForm({ categories }: SubmitFormProps) {
       </Field>
 
       <Field
-        label="Logo"
+        label="Descripción detallada (opcional)"
+        name="description"
+        hint="Opcional, pero ayuda a que te encuentren: contá qué hace el negocio y qué problema resuelve."
+        error={errors.description}
+      >
+        <Textarea
+          id="description"
+          name="description"
+          rows={4}
+          maxLength={600}
+          placeholder="Ej.: transcribe reuniones y arma resúmenes con los puntos clave, para equipos que graban muchas llamadas."
+        />
+      </Field>
+
+      <Field
+        label="Imagen del negocio (logo)"
         name="logo"
-        hint="PNG, JPG, WEBP o SVG. Máximo 1 MB."
+        hint="Cuadrada (proporción 1:1) para que se vea bien en el ranking. PNG, JPG, WEBP o SVG, hasta 1 MB."
         error={errors.logo}
       >
         <Input
@@ -160,15 +178,6 @@ export function SubmitForm({ categories }: SubmitFormProps) {
         />
       </Field>
 
-      <Field
-        label="Tu email de contacto"
-        name="ownerEmail"
-        hint="No lo publicamos. Lo usamos para avisarte y para que reclames la ficha."
-        error={errors.ownerEmail}
-      >
-        <Input id="ownerEmail" name="ownerEmail" type="email" required />
-      </Field>
-
       {message && (
         <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {message}
@@ -176,7 +185,7 @@ export function SubmitForm({ categories }: SubmitFormProps) {
       )}
 
       <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
-        {submitting ? "Enviando…" : "Enviar para revisión"}
+        {submitting ? "Creando tu cuenta…" : "Crear cuenta y publicar"}
       </Button>
     </form>
   );
@@ -199,9 +208,7 @@ function Field({
     <div className="space-y-1.5">
       <Label htmlFor={name}>{label}</Label>
       {children}
-      {hint && !error && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      )}
+      {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
       {error && error.length > 0 && (
         <p className="text-xs text-destructive">{error[0]}</p>
       )}

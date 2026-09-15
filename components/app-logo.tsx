@@ -24,15 +24,16 @@ export function AppLogo({ name, logoUrl, size = 40, className }: AppLogoProps) {
 
   if (logoUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- logos are arbitrary
-      // external/Storage URLs; Next/Image optimization adds no value at 40px.
+      // Logos are arbitrary external/Storage URLs; Next/Image adds no value at
+      // this size.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={logoUrl}
         alt={`Logo de ${name}`}
         style={dimension}
         loading="lazy"
         className={cn(
-          "shrink-0 rounded-md border border-border object-cover",
+          "shrink-0 rounded-full border border-border object-cover",
           className,
         )}
       />
@@ -44,7 +45,7 @@ export function AppLogo({ name, logoUrl, size = 40, className }: AppLogoProps) {
       style={dimension}
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-md border border-border bg-muted text-xs font-semibold text-muted-foreground",
+        "flex shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-muted-foreground",
         className,
       )}
     >

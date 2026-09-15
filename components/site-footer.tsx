@@ -10,11 +10,11 @@ export function SiteFooter() {
           de IA.
         </p>
         <nav className="flex items-center gap-4">
-          <Link href="/submit" className="hover:text-foreground">
-            Publicar app
-          </Link>
           <Link href="/categorias" className="hover:text-foreground">
             Categorías
+          </Link>
+          <Link href="/acceder" className="hover:text-foreground">
+            Acceder
           </Link>
         </nav>
       </div>

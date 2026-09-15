@@ -24,16 +24,30 @@ catálogo que ya anda solo.
 
 ```bash
 pnpm install
-pnpm db:push        # crea el schema en tu Postgres de Supabase
+cp .env.example .env.local   # completá las variables (ver abajo)
+pnpm db:migrate     # crea/actualiza el schema en Supabase (migraciones versionadas)
+pnpm db:seed        # carga la lista fija de categorías (idempotente)
 pnpm dev
 ```
 
-Copiá `.env.example` a `.env.local` y completá las variables (ver abajo).
+> Las **apps** arrancan vacías a propósito: no hay apps de mentira, ni en
+> desarrollo — entran por el formulario público + moderación. Las **categorías**
+> sí se cargan: `pnpm db:seed` inserta la lista fija (15 categorías), es
+> idempotente y re-correrlo no duplica nada.
 
-> La base arranca **vacía a propósito**: no hay apps ni categorías de mentira,
-> ni siquiera en desarrollo. `pnpm db:seed` existe pero es un no-op — no se corre
-> solo y no inserta datos falsos. Las categorías se crean desde el panel admin y
-> las apps entran por el formulario público + moderación.
+### Schema y migraciones
+
+El schema se maneja con **migraciones versionadas**. Editás `db/schema.ts`, luego:
+
+```bash
+pnpm db:generate    # genera el SQL de la migración a partir del diff del schema
+pnpm db:migrate     # aplica las migraciones pendientes
+```
+
+No usamos `drizzle-kit push`: sobre Supabase crashea al introspeccionar los
+schemas de sistema (`auth`, `storage`, …). `migrate` no introspecciona la base,
+así que es estable. Los scripts leen `.env.local` solos (no hace falta exportar
+nada).
 
 ### Variables de entorno
 
