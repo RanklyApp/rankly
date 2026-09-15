@@ -2,7 +2,6 @@ import { AppExplorer } from "@/components/app-explorer";
 import { type AppListItem } from "@/components/app-list";
 import { HeaderCta } from "@/components/header-cta";
 import { DarkGradientBg } from "@/components/ui/elegant-dark-pattern";
-import { SITE_DESCRIPTION } from "@/lib/constants";
 import { DEMO_APPS } from "@/lib/demo-apps";
 import { getApprovedAppsWithCategory } from "@/lib/queries";
 
@@ -44,9 +43,6 @@ export default async function HomePage() {
             <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl">
               Encontrá la herramienta de IA que necesitás
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-pretty text-muted-foreground sm:text-lg">
-              {SITE_DESCRIPTION}
-            </p>
           </div>
 
           {/* Search + category filter + ranked list (client, shares filter state) */}
