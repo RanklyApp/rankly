@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
+import { DarkGradientBg } from "@/components/ui/elegant-dark-pattern";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants";
 import { siteUrl } from "@/lib/seo";
 import "./globals.css";
@@ -45,9 +46,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           forcedTheme="dark"
           disableTransitionOnChange
         >
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
+          {/* Single source of truth for the site background: the elegant dark
+              pattern lives here so EVERY route shares the same texture/palette.
+              Pages must not re-wrap it. The sticky header renders on top. */}
+          <DarkGradientBg className="flex min-h-screen flex-1 flex-col">
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </DarkGradientBg>
         </ThemeProvider>
       </body>
     </html>

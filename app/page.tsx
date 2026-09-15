@@ -1,7 +1,6 @@
 import { AppExplorer } from "@/components/app-explorer";
 import { type AppListItem } from "@/components/app-list";
 import { HeaderCta } from "@/components/header-cta";
-import { DarkGradientBg } from "@/components/ui/elegant-dark-pattern";
 import { DEMO_APPS } from "@/lib/demo-apps";
 import { getApprovedAppsWithCategory } from "@/lib/queries";
 
@@ -29,26 +28,24 @@ export default async function HomePage() {
   const listApps: AppListItem[] = [...DEMO_APPS, ...realItems];
 
   return (
-    <DarkGradientBg className="min-h-screen">
-      <div className="mx-auto max-w-4xl px-4">
-        {/* Top-right entry — "Agregar negocio" for visitors, or the owner
-            view toggle + "Salir" when logged in (the landing has no header). */}
-        <div className="flex justify-end pt-4">
-          <HeaderCta />
+    // Background comes from the root layout (DarkGradientBg). This bare landing
+    // hides the site header (see SiteHeader) and puts its own CTA top-right.
+    <div className="mx-auto max-w-4xl px-4">
+      <div className="flex justify-end pt-4">
+        <HeaderCta />
+      </div>
+
+      {/* Hero */}
+      <section className="pb-16 pt-6 sm:pt-10">
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+            Encontrá la herramienta de IA que necesitás
+          </h1>
         </div>
 
-        {/* Hero */}
-        <section className="pb-16 pt-6 sm:pt-10">
-          <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-              Encontrá la herramienta de IA que necesitás
-            </h1>
-          </div>
-
-          {/* Search + category filter + ranked list (client, shares filter state) */}
-          <AppExplorer apps={listApps} />
-        </section>
-      </div>
-    </DarkGradientBg>
+        {/* Search + category filter + ranked list (client, shares filter state) */}
+        <AppExplorer apps={listApps} />
+      </section>
+    </div>
   );
 }

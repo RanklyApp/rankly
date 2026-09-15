@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { AppList, type AppListItem } from "@/components/app-list";
 import { EmptyState } from "@/components/empty-state";
 import { HeaderCta } from "@/components/header-cta";
-import { DarkGradientBg } from "@/components/ui/elegant-dark-pattern";
 import { getOwnerAppsWithCategory, getSessionUser } from "@/lib/auth";
 import { DEMO_APPS } from "@/lib/demo-apps";
 
@@ -40,32 +39,31 @@ export default async function DashboardPage() {
   const ranking: AppListItem[] = [...DEMO_APPS, ...ownerItems];
 
   return (
-    <DarkGradientBg className="min-h-screen">
-      <div className="mx-auto max-w-4xl px-4">
-        {/* No header bar (same as / and /submit) — owner nav lives here. */}
-        <div className="flex justify-end pt-4">
-          <HeaderCta />
-        </div>
-
-        <section className="pb-16 pt-6 sm:pt-10">
-          <header className="mb-6">
-            <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              Panel del negocio
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
-          </header>
-
-          {owned.length === 0 ? (
-            <EmptyState
-              icon={Info}
-              title="Todavía no tenés un negocio publicado"
-              description="Cargá tu negocio para verlo en el ranking y administrarlo desde acá."
-            />
-          ) : (
-            <AppList apps={ranking} showAmounts />
-          )}
-        </section>
+    // Background comes from the root layout (DarkGradientBg). Bare page: no header.
+    <div className="mx-auto max-w-4xl px-4">
+      {/* No header bar (same as / and /submit) — owner nav lives here. */}
+      <div className="flex justify-end pt-4">
+        <HeaderCta />
       </div>
-    </DarkGradientBg>
+
+      <section className="pb-16 pt-6 sm:pt-10">
+        <header className="mb-6">
+          <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Panel del negocio
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+        </header>
+
+        {owned.length === 0 ? (
+          <EmptyState
+            icon={Info}
+            title="Todavía no tenés un negocio publicado"
+            description="Cargá tu negocio para verlo en el ranking y administrarlo desde acá."
+          />
+        ) : (
+          <AppList apps={ranking} showAmounts />
+        )}
+      </section>
+    </div>
   );
 }
