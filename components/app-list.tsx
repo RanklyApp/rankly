@@ -213,7 +213,7 @@ function AppRankCard({
           </span>
         </div>
 
-        <AppLogo name={app.name} logoUrl={app.logoUrl} size={s.logo} />
+        <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.url} size={s.logo} />
 
         <div className="min-w-0 flex-1 md:flex-none md:basis-64">
           <div className="flex flex-wrap items-center gap-2">

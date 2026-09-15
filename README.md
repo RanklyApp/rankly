@@ -20,20 +20,34 @@ catálogo que ya anda solo.
 - **Vitest** para el motor de ranking
 - Deploy en **Vercel**
 
-## Arranque
+## Levantar en local
 
 ```bash
+# 1. Clonar
+git clone https://github.com/RanklyApp/rankly.git
+cd rankly
+
+# 2. Instalar dependencias
 pnpm install
-cp .env.example .env.local   # completá las variables (ver abajo)
-pnpm db:migrate     # crea/actualiza el schema en Supabase (migraciones versionadas)
-pnpm db:seed        # carga la lista fija de categorías (idempotente)
+
+# 3. Variables de entorno
+cp .env.example .env.local
+# Abrí .env.local y completá las variables (ver sección "Variables de entorno")
+
+# 4. Migraciones y seed (requiere DATABASE_URL en .env.local)
+pnpm db:migrate     # aplica el schema en Supabase
+pnpm db:seed        # carga las 15 categorías (idempotente)
+
+# 5. Arrancar
 pnpm dev
 ```
 
-> Las **apps** arrancan vacías a propósito: no hay apps de mentira, ni en
-> desarrollo — entran por el formulario público + moderación. Las **categorías**
-> sí se cargan: `pnpm db:seed` inserta la lista fija (15 categorías), es
-> idempotente y re-correrlo no duplica nada.
+> **Sin `DATABASE_URL`** el proyecto igual arranca: `pnpm dev` levanta con un
+> catálogo de demo (19 apps reales + 3 ficticias de ejemplo) sin tocar ninguna
+> base de datos. Útil para explorar UI y rutas sin configurar Supabase.
+
+> Las apps reales entran por el formulario público + moderación, nunca por código.
+> Las categorías se cargan con `pnpm db:seed` (idempotente, re-correrlo no duplica nada).
 
 ### Schema y migraciones
 
@@ -98,10 +112,11 @@ entre revalidaciones. Tests: `pnpm test`.
 
 ## Decisiones de arquitectura
 
-- **DB vacía tolerante**: la capa de queries (`lib/queries.ts`) envuelve cada
-  lectura; si no hay `DATABASE_URL` o la DB no responde, devuelve un fallback
-  vacío en vez de romper la página. La landing renderiza *empty states* prolijos
-  sin ninguna app falsa.
+- **Sin DB navegable**: la capa de queries (`lib/queries.ts`) envuelve cada
+  lectura; si no hay `DATABASE_URL`, devuelve datos del catálogo demo en vez de
+  romper la página. Todas las rutas (`/`, `/c/[slug]`, `/app/[slug]`, `/buscar`)
+  son navegables sin Supabase. Con DB, los datos demo se usan solo como relleno
+  inicial hasta que el catálogo real crezca.
 - **Plata en centavos**: `monthlyAmountCents` es `integer` para evitar bugs de
   punto flotante con dinero.
 - **Salida rastreada**: `/go/[slug]` registra el clic (evento + `clicks_count`) y

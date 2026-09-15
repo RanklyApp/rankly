@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface AppCardProps {
   app: Pick<
     App,
-    "slug" | "name" | "tagline" | "logoUrl" | "plan"
+    "slug" | "name" | "tagline" | "logoUrl" | "plan" | "websiteUrl"
   >;
   categoryName?: string;
   className?: string;
@@ -27,7 +27,7 @@ export function AppCard({ app, categoryName, className }: AppCardProps) {
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <AppLogo name={app.name} logoUrl={app.logoUrl} />
+        <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.websiteUrl} />
         {isPaid && <PromotedBadge />}
       </div>
 

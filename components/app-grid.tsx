@@ -3,7 +3,7 @@ import type { App } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
 interface AppGridProps {
-  apps: Pick<App, "id" | "slug" | "name" | "tagline" | "logoUrl" | "plan" | "categoryId">[];
+  apps: Pick<App, "id" | "slug" | "name" | "tagline" | "logoUrl" | "plan" | "categoryId" | "websiteUrl">[];
   categoryNames?: Record<string, string>;
   className?: string;
 }
