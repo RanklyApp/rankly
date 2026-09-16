@@ -55,7 +55,9 @@ export async function getOwnerAppById(
       categoryId: apps.categoryId,
       categoryName: categories.name,
       plan: apps.plan,
-      monthlyAmountCents: apps.monthlyAmountCents,
+      dailyAmountCents: apps.dailyAmountCents,
+      desiredDailyAmountCents: apps.desiredDailyAmountCents,
+      dodoSubscriptionId: apps.dodoSubscriptionId,
     })
     .from(apps)
     .innerJoin(categories, eq(apps.categoryId, categories.id))
