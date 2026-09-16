@@ -66,7 +66,9 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
     shell:
       "border-[#F59E0B] ring-1 ring-[#F59E0B]/60 bg-card/90 " +
       "shadow-[0_0_28px_rgba(245,158,11,0.25)] hover:shadow-[0_0_40px_rgba(245,158,11,0.38)]",
-    padding: "p-5",
+    // Horizontal padding is kept equal across tiers so the rank number / logo /
+    // title columns line up between rows; only vertical padding grows for #1.
+    padding: "px-4 py-5",
     logo: 56,
     rankColor: "text-[#FBBF24]",
     iconColor: "text-[#FBBF24]",
@@ -76,7 +78,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
     shell:
       "border-[#94A3B8] ring-1 ring-[#94A3B8]/40 bg-card/90 " +
       "shadow-[0_2px_14px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)]",
-    padding: "p-[18px]",
+    padding: "px-4 py-[18px]",
     logo: 48,
     rankColor: "text-[#E2E8F0]",
     iconColor: "text-[#CBD5E1]",
@@ -342,20 +344,9 @@ function AppRankCard({
 
       {/* Main row */}
       <div className="flex w-full items-center gap-4">
-        {/* Rank indicator — position in the ranked list. */}
-        <div
-          className={cn(
-            "flex shrink-0 flex-col items-center justify-center gap-0.5",
-            // Column widens a bit with rank so the larger podium numbers fit.
-            tier === "gold"
-              ? "w-14"
-              : tier === "silver"
-                ? "w-12"
-                : tier === "bronze"
-                  ? "w-11"
-                  : "w-10",
-          )}
-        >
+        {/* Rank indicator — position in the ranked list. Fixed width across all
+            tiers so the number column aligns row to row (sized for the big #1). */}
+        <div className="flex w-12 shrink-0 flex-col items-center justify-center gap-0.5">
           {/* Podium marks (crown / medals) now live on the logo itself, so the
               column holds only the rank number. */}
           <span
@@ -376,7 +367,10 @@ function AppRankCard({
           </span>
         </div>
 
-        <div className="relative shrink-0">
+        {/* Fixed-width logo slot (sized for the largest #1 disc) with the disc
+            centered inside, so smaller podium logos still keep the title column
+            aligned across every row. */}
+        <div className="relative flex w-14 shrink-0 items-center justify-center">
           <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.url} size={s.logo} />
 
           {/* #1: metallic gold crown resting on top of the logo, shifted to the
