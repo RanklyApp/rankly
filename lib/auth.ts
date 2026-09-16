@@ -58,6 +58,7 @@ export async function getOwnerAppById(
       dailyAmountCents: apps.dailyAmountCents,
       desiredDailyAmountCents: apps.desiredDailyAmountCents,
       dodoSubscriptionId: apps.dodoSubscriptionId,
+      firstPlaceSecondsTotal: apps.firstPlaceSecondsTotal,
     })
     .from(apps)
     .innerJoin(categories, eq(apps.categoryId, categories.id))
@@ -95,6 +96,8 @@ export interface OwnerAppRow {
   desiredDailyAmountCents: number;
   /** Null until the owner authorizes a Dodo mandate — no mandate = no charge. */
   dodoSubscriptionId: string | null;
+  /** Accrued seconds at the global #1 spot (gamification progress). */
+  firstPlaceSecondsTotal: number;
 }
 
 /** Approved apps owned by this user, with their category name (for the list). */
@@ -115,6 +118,7 @@ export async function getOwnerAppsWithCategory(
       dailyAmountCents: apps.dailyAmountCents,
       desiredDailyAmountCents: apps.desiredDailyAmountCents,
       dodoSubscriptionId: apps.dodoSubscriptionId,
+      firstPlaceSecondsTotal: apps.firstPlaceSecondsTotal,
     })
     .from(apps)
     .innerJoin(categories, eq(apps.categoryId, categories.id))

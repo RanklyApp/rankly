@@ -43,6 +43,13 @@
       "when": 1789482642373,
       "tag": "0005_nice_katie_power",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789528620773,
+      "tag": "0006_fast_wild_pack",
+      "breakpoints": true
     }
   ]
 }

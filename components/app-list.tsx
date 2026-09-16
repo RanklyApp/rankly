@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { useId, useState } from "react";
 import Link from "next/link";
 import { AppLogo } from "@/components/app-logo";
+import { MedalMark } from "@/components/medal-mark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -221,79 +222,6 @@ function CrownMark({
       <circle cx="12" cy="24.7" r="1.7" fill="url(#crownRuby)" stroke="#5A0E0E" strokeWidth="0.4" />
       <circle cx="24" cy="24.7" r="1.9" fill="url(#crownRuby)" stroke="#5A0E0E" strokeWidth="0.4" />
       <circle cx="36" cy="24.7" r="1.7" fill="url(#crownRuby)" stroke="#5A0E0E" strokeWidth="0.4" />
-    </svg>
-  );
-}
-
-/**
- * Podium medal pendant, drawn as a shaded SVG: a short ribbon plus a metallic
- * disc (radial gradient + rim + star) in silver or bronze. Hangs off the bottom
- * edge of the #2 / #3 logos like it's around the icon's "neck".
- */
-function MedalMark({
-  variant,
-  height,
-  className,
-}: {
-  variant: "silver" | "bronze";
-  height: number;
-  className?: string;
-}) {
-  const c =
-    variant === "silver"
-      ? {
-          hi: "#FFFFFF",
-          mid: "#CBD5E1",
-          lo: "#64748B",
-          rim: "#E2E8F0",
-          rimLo: "#94A3B8",
-          ribbon: "#475569",
-          star: "#F8FAFC",
-        }
-      : {
-          hi: "#F8E3C4",
-          mid: "#CD7F32",
-          lo: "#7A4A18",
-          rim: "#E7B06A",
-          rimLo: "#8A5A24",
-          ribbon: "#5B4632",
-          star: "#F6DDB8",
-        };
-  const id = variant; // one instance per tier, so a per-variant id is unique
-
-  return (
-    <svg
-      height={height}
-      viewBox="0 0 28 40"
-      fill="none"
-      className={className}
-      aria-hidden
-    >
-      <defs>
-        <radialGradient id={`medalFace-${id}`} cx="0.35" cy="0.3" r="0.85">
-          <stop offset="0" stopColor={c.hi} />
-          <stop offset="0.55" stopColor={c.mid} />
-          <stop offset="1" stopColor={c.lo} />
-        </radialGradient>
-        <linearGradient id={`medalRim-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={c.rim} />
-          <stop offset="1" stopColor={c.rimLo} />
-        </linearGradient>
-      </defs>
-
-      {/* Short ribbon straps behind the disc. */}
-      <path d="M9 2 L15 18 L11 20 L5 5 Z" fill={c.ribbon} />
-      <path d="M19 2 L13 18 L17 20 L23 5 Z" fill={c.ribbon} opacity="0.85" />
-
-      {/* Disc: rim ring + metallic face. */}
-      <circle cx="14" cy="27" r="11" fill={`url(#medalRim-${id})`} stroke={c.rimLo} strokeWidth="0.6" />
-      <circle cx="14" cy="27" r="8.4" fill={`url(#medalFace-${id})`} />
-      {/* Star detail. */}
-      <path
-        d="M14 21.4 L15.6 25.2 L19.6 25.5 L16.5 28.1 L17.5 32 L14 29.8 L10.5 32 L11.5 28.1 L8.4 25.5 L12.4 25.2 Z"
-        fill={c.star}
-        opacity="0.9"
-      />
     </svg>
   );
 }

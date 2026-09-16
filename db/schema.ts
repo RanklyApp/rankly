@@ -112,6 +112,14 @@ export const apps = pgTable(
     billingAlertAt: timestamp("billing_alert_at", { withTimezone: true }),
     stripeSubscriptionId: text("stripe_subscription_id"),
     clicksCount: integer("clicks_count").notNull().default(0),
+    // Gamification: total seconds this app has spent at the global #1 spot
+    // (highest paid daily bid across the whole directory). Accrues in real
+    // seconds while the app holds #1 — not necessarily consecutive; every stint
+    // at #1 adds up (see lib/first-place.ts). Thresholds unlock the silver
+    // (50 days) and gold (100 days) plaques.
+    firstPlaceSecondsTotal: integer("first_place_seconds_total")
+      .notNull()
+      .default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -219,6 +227,25 @@ export const charges = pgTable(
   ],
 );
 
+// --- ranking_leader ---
+// Singleton (one row, id = 'global') tracking who currently holds the global #1
+// spot and when we last credited accrued time. The accrual tick (see
+// lib/first-place.ts) reads this to credit the previous holder for the elapsed
+// interval, then overwrites it with the current leader + now.
+export const rankingLeader = pgTable("ranking_leader", {
+  // Always 'global' — a fixed key so upserts target the single row.
+  id: text("id").primaryKey().default("global"),
+  // Current #1 app. Null when no paid app qualifies. `set null` so deleting an
+  // app never blocks accrual.
+  leaderAppId: uuid("leader_app_id").references(() => apps.id, {
+    onDelete: "set null",
+  }),
+  // When accrued time was last settled (and this leader recorded).
+  lastAccrualAt: timestamp("last_accrual_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // --- Relations ---
 export const categoriesRelations = relations(categories, ({ many }) => ({
   apps: many(apps),
@@ -252,3 +279,5 @@ export type BillingDay = typeof billingDays.$inferSelect;
 export type NewBillingDay = typeof billingDays.$inferInsert;
 export type Charge = typeof charges.$inferSelect;
 export type NewCharge = typeof charges.$inferInsert;
+export type RankingLeader = typeof rankingLeader.$inferSelect;
+export type NewRankingLeader = typeof rankingLeader.$inferInsert;

@@ -258,6 +258,7 @@ export const DEMO_APP_RECORDS: AppWithCategory[] = DEMO_APPS.map((a, i) => {
     billingAlertAt: null,
     stripeSubscriptionId: null,
     clicksCount: 0,
+    firstPlaceSecondsTotal: 0,
     createdAt: EPOCH,
     category,
   };
