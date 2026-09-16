@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronDown, Crown, ExternalLink, Medal, Pencil } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ChevronDown, ExternalLink, Pencil } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useId, useState } from "react";
 import Link from "next/link";
@@ -56,10 +55,8 @@ interface TierStyle {
   logo: number;
   /** Rank number ("#1") color. */
   rankColor: string;
-  /** Podium medal/crown, or null off the podium. */
-  icon: LucideIcon | null;
+  /** Color for the podium mark (crown / medal) drawn over the logo. */
   iconColor: string;
-  iconSize: number;
   /** Faint gold tint overlay behind the #1 card. */
   goldTint?: boolean;
 }
@@ -72,9 +69,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
     padding: "p-5",
     logo: 56,
     rankColor: "text-[#FBBF24]",
-    icon: Crown,
     iconColor: "text-[#FBBF24]",
-    iconSize: 22,
     goldTint: true,
   },
   silver: {
@@ -84,9 +79,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
     padding: "p-[18px]",
     logo: 48,
     rankColor: "text-[#E2E8F0]",
-    icon: Medal,
     iconColor: "text-[#CBD5E1]",
-    iconSize: 20,
   },
   bronze: {
     shell:
@@ -95,9 +88,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
     padding: "p-4",
     logo: 44,
     rankColor: "text-[#CD7F32]",
-    icon: Medal,
     iconColor: "text-[#CD7F32]",
-    iconSize: 20,
   },
   mid: {
     shell:
@@ -106,9 +97,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
     padding: "p-4",
     logo: 40,
     rankColor: "text-[#93A5C4]",
-    icon: null,
     iconColor: "",
-    iconSize: 0,
   },
 };
 
@@ -146,6 +135,167 @@ const GLASS_BUTTON_STYLE: CSSProperties = {
   border: "1px solid rgba(255,255,255,0.22)",
 };
 
+/**
+ * Metallic gold king's crown, drawn as a shaded SVG (not a flat icon): vertical
+ * gold gradients for the body/band, a specular highlight, gold ball tips and
+ * ruby gems for the "rendered" look. Sits centered on top of the #1 logo.
+ */
+function CrownMark({
+  height,
+  className,
+}: {
+  height: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      height={height}
+      viewBox="0 0 48 34"
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="crownBody" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FFF7CC" />
+          <stop offset="0.4" stopColor="#F6CE4C" />
+          <stop offset="0.7" stopColor="#D99A1C" />
+          <stop offset="1" stopColor="#9A6410" />
+        </linearGradient>
+        <linearGradient id="crownBand" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#F1C64A" />
+          <stop offset="0.5" stopColor="#C98A16" />
+          <stop offset="1" stopColor="#8A5A0C" />
+        </linearGradient>
+        <radialGradient id="crownBall" cx="0.35" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#FFFBE6" />
+          <stop offset="0.55" stopColor="#F1C64A" />
+          <stop offset="1" stopColor="#B77E12" />
+        </radialGradient>
+        <radialGradient id="crownRuby" cx="0.35" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#FF9E9E" />
+          <stop offset="0.55" stopColor="#B01E1E" />
+          <stop offset="1" stopColor="#5A0E0E" />
+        </radialGradient>
+      </defs>
+
+      {/* Crown body (five peaks). */}
+      <path
+        d="M4 21 L7 10 L12.5 17 L15.5 6.5 L19.75 16 L24 4.5 L28.25 16 L32.5 6.5 L35.5 17 L41 10 L44 21 Z"
+        fill="url(#crownBody)"
+        stroke="#7A4E0A"
+        strokeWidth="0.7"
+        strokeLinejoin="round"
+      />
+      {/* Left-side specular sheen. */}
+      <path
+        d="M4 21 L7 10 L12.5 17 L15.5 6.5 L19.75 16 L24 4.5"
+        fill="none"
+        stroke="rgba(255,255,255,0.55)"
+        strokeWidth="0.9"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {/* Band. */}
+      <rect
+        x="4"
+        y="19.5"
+        width="40"
+        height="10.5"
+        rx="2.4"
+        fill="url(#crownBand)"
+        stroke="#7A4E0A"
+        strokeWidth="0.7"
+      />
+      {/* Band top highlight. */}
+      <rect x="5.5" y="21" width="37" height="1.6" rx="0.8" fill="rgba(255,255,255,0.4)" />
+      {/* Gold ball tips. */}
+      <circle cx="7" cy="10" r="2" fill="url(#crownBall)" stroke="#7A4E0A" strokeWidth="0.5" />
+      <circle cx="15.5" cy="6.5" r="2.2" fill="url(#crownBall)" stroke="#7A4E0A" strokeWidth="0.5" />
+      <circle cx="24" cy="4.5" r="2.5" fill="url(#crownBall)" stroke="#7A4E0A" strokeWidth="0.5" />
+      <circle cx="32.5" cy="6.5" r="2.2" fill="url(#crownBall)" stroke="#7A4E0A" strokeWidth="0.5" />
+      <circle cx="41" cy="10" r="2" fill="url(#crownBall)" stroke="#7A4E0A" strokeWidth="0.5" />
+      {/* Ruby gems along the band. */}
+      <circle cx="12" cy="24.7" r="1.7" fill="url(#crownRuby)" stroke="#5A0E0E" strokeWidth="0.4" />
+      <circle cx="24" cy="24.7" r="1.9" fill="url(#crownRuby)" stroke="#5A0E0E" strokeWidth="0.4" />
+      <circle cx="36" cy="24.7" r="1.7" fill="url(#crownRuby)" stroke="#5A0E0E" strokeWidth="0.4" />
+    </svg>
+  );
+}
+
+/**
+ * Podium medal pendant, drawn as a shaded SVG: a short ribbon plus a metallic
+ * disc (radial gradient + rim + star) in silver or bronze. Hangs off the bottom
+ * edge of the #2 / #3 logos like it's around the icon's "neck".
+ */
+function MedalMark({
+  variant,
+  height,
+  className,
+}: {
+  variant: "silver" | "bronze";
+  height: number;
+  className?: string;
+}) {
+  const c =
+    variant === "silver"
+      ? {
+          hi: "#FFFFFF",
+          mid: "#CBD5E1",
+          lo: "#64748B",
+          rim: "#E2E8F0",
+          rimLo: "#94A3B8",
+          ribbon: "#475569",
+          star: "#F8FAFC",
+        }
+      : {
+          hi: "#F8E3C4",
+          mid: "#CD7F32",
+          lo: "#7A4A18",
+          rim: "#E7B06A",
+          rimLo: "#8A5A24",
+          ribbon: "#5B4632",
+          star: "#F6DDB8",
+        };
+  const id = variant; // one instance per tier, so a per-variant id is unique
+
+  return (
+    <svg
+      height={height}
+      viewBox="0 0 28 40"
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <defs>
+        <radialGradient id={`medalFace-${id}`} cx="0.35" cy="0.3" r="0.85">
+          <stop offset="0" stopColor={c.hi} />
+          <stop offset="0.55" stopColor={c.mid} />
+          <stop offset="1" stopColor={c.lo} />
+        </radialGradient>
+        <linearGradient id={`medalRim-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={c.rim} />
+          <stop offset="1" stopColor={c.rimLo} />
+        </linearGradient>
+      </defs>
+
+      {/* Short ribbon straps behind the disc. */}
+      <path d="M9 2 L15 18 L11 20 L5 5 Z" fill={c.ribbon} />
+      <path d="M19 2 L13 18 L17 20 L23 5 Z" fill={c.ribbon} opacity="0.85" />
+
+      {/* Disc: rim ring + metallic face. */}
+      <circle cx="14" cy="27" r="11" fill={`url(#medalRim-${id})`} stroke={c.rimLo} strokeWidth="0.6" />
+      <circle cx="14" cy="27" r="8.4" fill={`url(#medalFace-${id})`} />
+      {/* Star detail. */}
+      <path
+        d="M14 21.4 L15.6 25.2 L19.6 25.5 L16.5 28.1 L17.5 32 L14 29.8 L10.5 32 L11.5 28.1 L8.4 25.5 L12.4 25.2 Z"
+        fill={c.star}
+        opacity="0.9"
+      />
+    </svg>
+  );
+}
+
 function AppRankCard({
   app,
   rank,
@@ -157,7 +307,6 @@ function AppRankCard({
 }) {
   const tier = tierForRank(rank);
   const s = TIER_STYLES[tier];
-  const Icon = s.icon;
 
   // Each card owns its open/closed state — one panel never affects another.
   const [open, setOpen] = useState(false);
@@ -207,13 +356,8 @@ function AppRankCard({
                   : "w-10",
           )}
         >
-          {Icon && (
-            <Icon
-              className={s.iconColor}
-              style={{ width: s.iconSize, height: s.iconSize }}
-              aria-hidden
-            />
-          )}
+          {/* Podium marks (crown / medals) now live on the logo itself, so the
+              column holds only the rank number. */}
           <span
             className={cn(
               "font-bold tabular-nums leading-none",
@@ -232,7 +376,29 @@ function AppRankCard({
           </span>
         </div>
 
-        <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.url} size={s.logo} />
+        <div className="relative shrink-0">
+          <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.url} size={s.logo} />
+
+          {/* #1: metallic gold crown resting on top of the logo, shifted to the
+              right and slightly tilted so it sits at an angle on the "head". */}
+          {tier === "gold" && (
+            <CrownMark
+              height={Math.round(s.logo * 0.5)}
+              className="absolute left-[64%] -translate-x-1/2 -top-3.5 rotate-[15deg] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
+            />
+          )}
+
+          {/* #2/#3: metallic medal pendant hanging off the bottom edge of the
+              circular logo — pulled up so it overlaps the edge without reaching
+              the card border. */}
+          {(tier === "silver" || tier === "bronze") && (
+            <MedalMark
+              variant={tier}
+              height={Math.round(s.logo * 0.58)}
+              className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
+            />
+          )}
+        </div>
 
         <div className="min-w-0 flex-1 md:flex-none md:basis-64">
           <div className="flex flex-wrap items-center gap-2">
