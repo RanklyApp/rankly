@@ -194,7 +194,19 @@ function AppRankCard({
       {/* Main row */}
       <div className="flex w-full items-center gap-4">
         {/* Rank indicator — position in the ranked list. */}
-        <div className="flex w-10 shrink-0 flex-col items-center justify-center gap-0.5">
+        <div
+          className={cn(
+            "flex shrink-0 flex-col items-center justify-center gap-0.5",
+            // Column widens a bit with rank so the larger podium numbers fit.
+            tier === "gold"
+              ? "w-14"
+              : tier === "silver"
+                ? "w-12"
+                : tier === "bronze"
+                  ? "w-11"
+                  : "w-10",
+          )}
+        >
           {Icon && (
             <Icon
               className={s.iconColor}
@@ -205,7 +217,14 @@ function AppRankCard({
           <span
             className={cn(
               "font-bold tabular-nums leading-none",
-              tier === "gold" ? "text-base" : "text-sm",
+              // Decreasing size by podium rank; #4 and below share the standard size.
+              tier === "gold"
+                ? "text-2xl"
+                : tier === "silver"
+                  ? "text-lg"
+                  : tier === "bronze"
+                    ? "text-base"
+                    : "text-sm",
               s.rankColor,
             )}
           >
