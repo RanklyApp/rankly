@@ -30,13 +30,15 @@ export default async function HomePage() {
   return (
     // Background comes from the root layout (DarkGradientBg). This bare landing
     // hides the site header (see SiteHeader) and puts its own CTA top-right.
-    <div className="mx-auto max-w-4xl px-4">
-      <div className="flex justify-end pt-4">
+    <div>
+      {/* CTA spans the full viewport width (not the hero's max-w-4xl) so the
+          buttons sit at the far top-right, clear of the centered title. */}
+      <div className="flex justify-end px-4 pt-6 sm:px-8 sm:pt-8">
         <HeaderCta />
       </div>
 
       {/* Hero */}
-      <section className="pb-16 pt-6 sm:pt-10">
+      <section className="mx-auto max-w-4xl px-4 pb-16 pt-4 sm:pt-8">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl">
             Encontrá la herramienta de IA que necesitás
