@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,18 @@ export function DashboardTabs({
   const slide = reduce
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 380, damping: 32 };
+
+  // Depth transition for the panel content: a gradual scale + fade. `easeInOut`
+  // keeps both ends soft so the crossfade never looks like a hard cut.
+  const depth = reduce
+    ? { duration: 0 }
+    : { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
+
+  // Same curve/length for the container's height (layout) animation, so the box
+  // resizes smoothly between tabs of different heights instead of snapping.
+  const sizeShift = reduce
+    ? { duration: 0 }
+    : { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
 
   const panels: Record<TabKey, ReactNode> = {
     ranking,
@@ -106,17 +118,26 @@ export function DashboardTabs({
         </div>
       </div>
 
-      {TABS.map((t) => (
-        <div
-          key={t.key}
-          role="tabpanel"
-          id={`panel-${t.key}`}
-          aria-labelledby={`tab-${t.key}`}
-          hidden={active !== t.key}
-        >
-          {active === t.key && panels[t.key]}
-        </div>
-      ))}
+      {/* Depth transition. The outer box animates its own height (`layout`) so
+          switching between tabs of different sizes resizes smoothly. `popLayout`
+          takes the leaving panel out of flow so the entering one can crossfade
+          in over it (no gap/cut), while it sinks back (scale + fade). */}
+      <motion.div layout transition={sizeShift} className="relative w-full">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={active}
+            role="tabpanel"
+            id={`panel-${active}`}
+            aria-labelledby={`tab-${active}`}
+            initial={reduce ? false : { opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+            transition={depth}
+          >
+            {panels[active]}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
