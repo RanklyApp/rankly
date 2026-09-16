@@ -4,12 +4,16 @@ import { redirect } from "next/navigation";
 import { AdminDeleteButton } from "@/components/admin-delete-button";
 import { AppList, type AppListItem } from "@/components/app-list";
 import { BidForm } from "@/components/bid-form";
+import { DashboardTabs } from "@/components/dashboard-tabs";
+import { EditAppForm } from "@/components/edit-app-form";
 import { EmptyState } from "@/components/empty-state";
+import { FirstPlaceProgress } from "@/components/first-place-progress";
 import { HeaderCta } from "@/components/header-cta";
 import { getOwnerAppsWithCategory, getSessionUser } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { DEMO_APPS } from "@/lib/demo-apps";
-import { getAllAppsForAdmin } from "@/lib/queries";
+import { getAllAppsForAdmin, getCategories } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { deleteBusinessAction } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -39,6 +43,11 @@ export default async function DashboardPage() {
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
   const allApps = isAdmin ? await getAllAppsForAdmin() : [];
 
+  // Categories power the "Mi Negocio" edit form (owner view only).
+  const categories =
+    !isAdmin && owned.length > 0 ? await getCategories() : [];
+  const categoryOptions = categories.map((c) => ({ id: c.id, name: c.name }));
+
   // The owner's real businesses, highlighted, appended to the same ranking the
   // public sees. `showAmounts` reveals the per-business paid amount (private).
   const ownerItems: AppListItem[] = owned.map((a) => ({
@@ -65,7 +74,7 @@ export default async function DashboardPage() {
       </div>
 
       <section className="pb-16 pt-6 sm:pt-10">
-        <header className="mb-6">
+        <header className={cn("mb-6", !isAdmin && "text-center")}>
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             {isAdmin ? "Administración del sitio" : "Panel del negocio"}
           </h1>
@@ -137,19 +146,74 @@ export default async function DashboardPage() {
           />
         ) : (
           <>
+            {/* Business identity + bid control — centered, always visible above
+                the tabs (título + monto). */}
             <div className="mb-10 space-y-8">
               {owned.map((a) => (
                 <div key={a.id} className="flex flex-col items-center gap-3">
+                  <p className="text-center font-medium text-white">{a.name}</p>
                   <BidForm
                     appId={a.id}
                     initialDollars={Math.round(a.desiredDailyAmountCents / 100)}
                   />
-                  <p className="text-center font-medium text-white">{a.name}</p>
                 </div>
               ))}
             </div>
 
-            <AppList apps={ranking} showAmounts />
+            <DashboardTabs
+              // Ranking: the ranked list, no per-business amounts shown here.
+              ranking={<AppList apps={ranking} />}
+              // Recompensas: the accrued #1 time progress toward the plaques.
+              rewards={
+                <div className="mx-auto max-w-md space-y-8">
+                  {owned.map((a) => (
+                    <div key={a.id} className="space-y-2">
+                      <p className="text-center text-sm font-medium text-white">
+                        {a.name}
+                      </p>
+                      <FirstPlaceProgress
+                        secondsTotal={a.firstPlaceSecondsTotal}
+                      />
+                    </div>
+                  ))}
+                </div>
+              }
+              // Competencia: same ranking WITH the daily bids visible, so the
+              // owner sees how much to bid to overtake those above.
+              competition={
+                <div className="space-y-4">
+                  <p className="text-center text-sm text-muted-foreground">
+                    Cuánto puja por día cada negocio. Subí tu monto (arriba) para
+                    superar a los que tenés por encima.
+                  </p>
+                  <AppList apps={ranking} showAmounts />
+                </div>
+              }
+              // Mi Negocio: the existing edit form.
+              myBusiness={
+                <div className="mx-auto max-w-2xl space-y-10">
+                  {owned.map((a) => (
+                    <div key={a.id} className="space-y-4">
+                      {owned.length > 1 && (
+                        <h3 className="text-center font-semibold text-white">
+                          {a.name}
+                        </h3>
+                      )}
+                      <EditAppForm
+                        appId={a.id}
+                        defaultValues={{
+                          name: a.name,
+                          categoryId: a.categoryId,
+                          websiteUrl: a.websiteUrl,
+                          description: a.description,
+                        }}
+                        categories={categoryOptions}
+                      />
+                    </div>
+                  ))}
+                </div>
+              }
+            />
           </>
         )}
       </section>
