@@ -33,14 +33,24 @@ export function AppExplorer({ apps, categories }: AppExplorerProps) {
   );
 
   const [selected, setSelected] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
 
-  const filtered = useMemo(
-    () =>
-      selected.length === 0
-        ? apps
-        : apps.filter((a) => selected.includes(a.category)),
-    [apps, selected],
-  );
+  // Live client-side filter over the full list (demo + real, any source). Text
+  // match is partial and case-insensitive across name, category, tagline and
+  // description, so "redes sociales" matches an app by its category even when
+  // the term isn't in its name/description. Category chips narrow it further.
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return apps.filter((a) => {
+      if (selected.length > 0 && !selected.includes(a.category)) return false;
+      if (!term) return true;
+      const haystack = [a.name, a.category, a.tagline, a.description]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [apps, selected, query]);
 
   function toggle(category: string) {
     setSelected((prev) =>
@@ -54,7 +64,7 @@ export function AppExplorer({ apps, categories }: AppExplorerProps) {
     <>
       <div className="mx-auto mt-8 flex max-w-xl items-center gap-2">
         <div className="min-w-0 flex-1">
-          <SearchBar />
+          <SearchBar value={query} onValueChange={setQuery} />
         </div>
         <CategoryFilter
           categories={allCategories}
@@ -72,7 +82,9 @@ export function AppExplorer({ apps, categories }: AppExplorerProps) {
           </>
         ) : (
           <p className="text-center text-sm text-muted-foreground">
-            No hay apps en las categorías seleccionadas.
+            {query.trim()
+              ? `Sin resultados para “${query.trim()}”.`
+              : "No hay apps en las categorías seleccionadas."}
           </p>
         )}
       </div>
