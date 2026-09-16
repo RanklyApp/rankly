@@ -1,19 +1,22 @@
 "use client";
 
-import { ChevronDown, Crown, ExternalLink, Medal } from "lucide-react";
+import { ChevronDown, Crown, ExternalLink, Medal, Pencil } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useId, useState } from "react";
+import Link from "next/link";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export interface AppListItem {
+  /** DB id — only set for owner's own businesses, used for the edit link. */
+  id?: string;
   name: string;
   tagline: string;
   category: string;
   url: string;
-  /** 1–2 line summary shown in the expandable panel. Falls back to tagline. */
+  /** Full description shown in the expandable panel. Falls back to tagline. */
   description?: string;
   logoUrl?: string | null;
   paid?: boolean;
@@ -237,7 +240,7 @@ function AppRankCard({
           {app.tagline}
         </p>
 
-        {/* Actions: expand-description toggle + tracked outbound link. */}
+        {/* Actions: expand-description toggle + edit (owner only) + outbound link. */}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Button
             type="button"
@@ -257,6 +260,23 @@ function AppRankCard({
               aria-hidden
             />
           </Button>
+
+          {app.isOwner && app.id && (
+            <Button
+              asChild
+              size="icon"
+              className={GLASS_BUTTON_CLASS}
+              style={GLASS_BUTTON_STYLE}
+            >
+              <Link
+                href={`/dashboard/editar/${app.id}`}
+                aria-label="Editar negocio"
+                title="Editar negocio"
+              >
+                <Pencil className="size-4" aria-hidden />
+              </Link>
+            </Button>
+          )}
 
           <Button
             asChild

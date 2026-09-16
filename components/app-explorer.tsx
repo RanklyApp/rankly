@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AppList, type AppListItem } from "@/components/app-list";
 import { CategoryFilter } from "@/components/category-filter";
+import { PaidDisclosure } from "@/components/paid-disclosure";
 import { SearchBar } from "@/components/search-bar";
 
 interface AppExplorerProps {
@@ -65,7 +66,10 @@ export function AppExplorer({ apps, categories }: AppExplorerProps) {
 
       <div className="mt-12">
         {filtered.length > 0 ? (
-          <AppList apps={filtered} />
+          <>
+            <PaidDisclosure className="mb-4" />
+            <AppList apps={filtered} />
+          </>
         ) : (
           <p className="text-center text-sm text-muted-foreground">
             No hay apps en las categorías seleccionadas.

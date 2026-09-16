@@ -39,6 +39,37 @@ export async function ensureUserRow(
     .onConflictDoNothing({ target: users.id });
 }
 
+/** Single approved app owned by this user (for the edit page). */
+export async function getOwnerAppById(
+  userId: string,
+  appId: string,
+): Promise<OwnerAppRow | null> {
+  const rows = await getDb()
+    .select({
+      id: apps.id,
+      name: apps.name,
+      tagline: apps.tagline,
+      description: apps.description,
+      websiteUrl: apps.websiteUrl,
+      logoUrl: apps.logoUrl,
+      categoryId: apps.categoryId,
+      categoryName: categories.name,
+      plan: apps.plan,
+      monthlyAmountCents: apps.monthlyAmountCents,
+    })
+    .from(apps)
+    .innerJoin(categories, eq(apps.categoryId, categories.id))
+    .where(
+      and(
+        eq(apps.id, appId),
+        eq(apps.ownerUserId, userId),
+        eq(apps.status, "approved"),
+      ),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /** Approved apps owned by this user. */
 export async function getOwnerApps(userId: string): Promise<App[]> {
   return getDb()
@@ -51,8 +82,10 @@ export interface OwnerAppRow {
   id: string;
   name: string;
   tagline: string;
+  description: string;
   websiteUrl: string;
   logoUrl: string;
+  categoryId: string;
   categoryName: string;
   plan: "free" | "paid";
   dailyAmountCents: number;
@@ -71,8 +104,10 @@ export async function getOwnerAppsWithCategory(
       id: apps.id,
       name: apps.name,
       tagline: apps.tagline,
+      description: apps.description,
       websiteUrl: apps.websiteUrl,
       logoUrl: apps.logoUrl,
+      categoryId: apps.categoryId,
       categoryName: categories.name,
       plan: apps.plan,
       dailyAmountCents: apps.dailyAmountCents,

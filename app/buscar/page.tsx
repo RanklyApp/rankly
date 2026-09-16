@@ -2,6 +2,7 @@ import { Search, SearchX } from "lucide-react";
 import type { Metadata } from "next";
 import { AppGrid } from "@/components/app-grid";
 import { EmptyState } from "@/components/empty-state";
+import { PaidDisclosure } from "@/components/paid-disclosure";
 import { SearchBar } from "@/components/search-bar";
 import { getCategories, searchApprovedApps } from "@/lib/queries";
 import { rankApps } from "@/lib/rank";
@@ -49,6 +50,7 @@ export default async function SearchPage({
         />
       ) : ordered.length > 0 ? (
         <>
+          <PaidDisclosure className="mb-3" />
           <p className="mb-4 text-sm text-muted-foreground">
             {ordered.length}{" "}
             {ordered.length === 1 ? "resultado" : "resultados"} para “{q}”

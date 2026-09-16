@@ -42,8 +42,10 @@ export default async function DashboardPage() {
   // The owner's real businesses, highlighted, appended to the same ranking the
   // public sees. `showAmounts` reveals the per-business paid amount (private).
   const ownerItems: AppListItem[] = owned.map((a) => ({
+    id: a.id,
     name: a.name,
     tagline: a.tagline,
+    description: a.description || undefined,
     category: a.categoryName,
     url: a.websiteUrl,
     logoUrl: a.logoUrl,

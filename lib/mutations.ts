@@ -1,5 +1,5 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { App } from "@/db/schema";
 import { slugify } from "@/lib/validations";
@@ -68,6 +68,40 @@ export async function createApp(input: CreateAppInput): Promise<App> {
     })
     .returning();
   return row;
+}
+
+interface UpdateAppInput {
+  name: string;
+  categoryId: string;
+  websiteUrl: string;
+  description?: string;
+  /** Pass a new logo URL if the owner uploaded a replacement. */
+  logoUrl?: string;
+}
+
+/** Update an app. Only the owner (matched by ownerUserId) can update. */
+export async function updateApp(
+  appId: string,
+  ownerUserId: string,
+  input: UpdateAppInput,
+): Promise<void> {
+  const db = getDb();
+  const description = input.description?.trim() ?? "";
+  const tagline = (description || input.name).slice(0, 80);
+
+  const values: Partial<typeof apps.$inferInsert> = {
+    name: input.name,
+    categoryId: input.categoryId,
+    websiteUrl: input.websiteUrl,
+    description,
+    tagline,
+  };
+  if (input.logoUrl) values.logoUrl = input.logoUrl;
+
+  await db
+    .update(apps)
+    .set(values)
+    .where(and(eq(apps.id, appId), eq(apps.ownerUserId, ownerUserId)));
 }
 
 export async function moderateApp(

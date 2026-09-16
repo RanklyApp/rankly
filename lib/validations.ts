@@ -39,6 +39,27 @@ export const submitAppSchema = z.object({
 
 export type SubmitAppInput = z.infer<typeof submitAppSchema>;
 
+/** Owner app edit (no email/password — already authenticated). */
+export const editAppSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "El nombre es muy corto")
+    .max(60, "Máximo 60 caracteres"),
+  categoryId: z.string().uuid("Elegí una categoría"),
+  websiteUrl: z
+    .string()
+    .trim()
+    .url("Poné una URL válida (https://...)")
+    .max(300),
+  description: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().trim().max(600, "Máximo 600 caracteres").optional(),
+  ),
+});
+
+export type EditAppInput = z.infer<typeof editAppSchema>;
+
 /** Owner login (email + password). */
 export const loginSchema = z.object({
   email: z.string().trim().email("Email inválido").max(200),

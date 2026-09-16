@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppGrid } from "@/components/app-grid";
 import { EmptyState } from "@/components/empty-state";
+import { PaidDisclosure } from "@/components/paid-disclosure";
 import { Pagination } from "@/components/pagination";
 import { SearchBar } from "@/components/search-bar";
 import { PAGE_SIZE } from "@/lib/constants";
@@ -107,6 +108,7 @@ export default async function CategoryPage({
 
       {ordered.length > 0 ? (
         <>
+          <PaidDisclosure className="mb-3" />
           <p className="mb-4 text-sm text-muted-foreground">
             {ordered.length}{" "}
             {ordered.length === 1 ? "herramienta" : "herramientas"}
