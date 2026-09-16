@@ -146,20 +146,6 @@ export default async function DashboardPage() {
           />
         ) : (
           <>
-            {/* Business identity + bid control — centered, always visible above
-                the tabs (título + monto). */}
-            <div className="mb-10 space-y-8">
-              {owned.map((a) => (
-                <div key={a.id} className="flex flex-col items-center gap-3">
-                  <p className="text-center font-medium text-white">{a.name}</p>
-                  <BidForm
-                    appId={a.id}
-                    initialDollars={Math.round(a.desiredDailyAmountCents / 100)}
-                  />
-                </div>
-              ))}
-            </div>
-
             <DashboardTabs
               // Ranking: the ranked list, no per-business amounts shown here.
               ranking={<AppList apps={ranking} />}
@@ -178,15 +164,37 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               }
-              // Competencia: same ranking WITH the daily bids visible, so the
-              // owner sees how much to bid to overtake those above.
+              // Competencia: the owner's bid control (name + monto) plus the
+              // same ranking WITH the daily bids visible, so they see how much to
+              // bid to overtake those above. The bid block lives only here.
               competition={
-                <div className="space-y-4">
-                  <p className="text-center text-sm text-muted-foreground">
-                    Cuánto puja por día cada negocio. Subí tu monto (arriba) para
-                    superar a los que tenés por encima.
-                  </p>
-                  <AppList apps={ranking} showAmounts />
+                <div className="space-y-10">
+                  <div className="space-y-8">
+                    {owned.map((a) => (
+                      <div
+                        key={a.id}
+                        className="flex flex-col items-center gap-3"
+                      >
+                        <p className="text-center font-medium text-white">
+                          {a.name}
+                        </p>
+                        <BidForm
+                          appId={a.id}
+                          initialDollars={Math.round(
+                            a.desiredDailyAmountCents / 100,
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-center text-sm text-muted-foreground">
+                      Cuánto puja por día cada negocio. Subí tu monto para superar
+                      a los que tenés por encima.
+                    </p>
+                    <AppList apps={ranking} showAmounts />
+                  </div>
                 </div>
               }
               // Mi Negocio: the existing edit form.
