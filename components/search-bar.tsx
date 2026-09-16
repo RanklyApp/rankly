@@ -24,7 +24,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({
-  action = "/buscar",
+  action = "/",
   defaultValue = "",
   placeholder = "Buscá una funcionalidad: transcribir reuniones, generar imágenes…",
   className,

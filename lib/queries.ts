@@ -206,37 +206,6 @@ export function getApprovedAppsByCategory(
   );
 }
 
-export function searchApprovedApps(q: string): Promise<App[]> {
-  const term = q.trim();
-  if (!term) return Promise.resolve([]);
-  return safe(
-    () =>
-      getDb()
-        .select()
-        .from(apps)
-        .where(
-          and(
-            eq(apps.status, "approved"),
-            or(
-              ilike(apps.name, `%${term}%`),
-              ilike(apps.tagline, `%${term}%`),
-              ilike(apps.description, `%${term}%`),
-            ),
-          ),
-        ),
-    [],
-    () => {
-      const t = term.toLowerCase();
-      return demoData.DEMO_APP_RECORDS.filter(
-        (a) =>
-          a.name.toLowerCase().includes(t) ||
-          a.tagline.toLowerCase().includes(t) ||
-          a.description.toLowerCase().includes(t),
-      ).map(demoData.toApp);
-    },
-  );
-}
-
 export function getAppBySlug(slug: string): Promise<AppWithCategory | null> {
   return safe(
     async () => {
