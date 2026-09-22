@@ -7,8 +7,8 @@ import { BidForm } from "@/components/bid-form";
 import { DashboardTabs } from "@/components/dashboard-tabs";
 import { EditAppForm } from "@/components/edit-app-form";
 import { EmptyState } from "@/components/empty-state";
-import { FirstPlaceProgress } from "@/components/first-place-progress";
 import { HeaderCta } from "@/components/header-cta";
+import { RewardsPanel } from "@/components/rewards-panel";
 import { getOwnerAppsWithCategory, getSessionUser } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { DEMO_APPS } from "@/lib/demo-apps";
@@ -149,16 +149,15 @@ export default async function DashboardPage() {
             <DashboardTabs
               // Recompensas: the accrued #1 time progress toward the plaques.
               rewards={
-                <div className="mx-auto max-w-md space-y-8">
+                <div className="space-y-16 py-4">
                   {owned.map((a) => (
-                    <div key={a.id} className="space-y-2">
-                      <p className="text-center text-sm font-medium text-white">
-                        {a.name}
-                      </p>
-                      <FirstPlaceProgress
-                        secondsTotal={a.firstPlaceSecondsTotal}
-                      />
-                    </div>
+                    <RewardsPanel
+                      key={a.id}
+                      name={a.name}
+                      logoUrl={a.logoUrl}
+                      url={a.websiteUrl}
+                      secondsTotal={a.firstPlaceSecondsTotal}
+                    />
                   ))}
                 </div>
               }

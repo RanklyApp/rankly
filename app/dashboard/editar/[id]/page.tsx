@@ -51,6 +51,7 @@ export default async function EditAppPage({
             description: app.description,
           }}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+          redirectHref="/dashboard"
         />
       </div>
     </DarkGradientBg>

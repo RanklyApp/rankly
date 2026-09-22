@@ -94,7 +94,7 @@
   }
 }
 
-/* First-place progress fill (components/first-place-progress.tsx).
+/* First-place progress fill (components/rewards-panel.tsx).
  * Amber/gold gradient with a soft glow, growing from 0 to its value on mount,
  * plus a discreet shimmer that sweeps across. `--fp-w` is set inline per bar. */
 @keyframes fp-grow {
