@@ -249,7 +249,7 @@ function AppRankCard({
     <li
       className={cn(
         "group relative flex flex-col rounded-xl border backdrop-blur-sm",
-        "transition-all duration-200 ease-out hover:-translate-y-0.5",
+        "transition-[transform,box-shadow,border-color,outline-color] duration-200 ease-snappy hover:-translate-y-0.5",
         s.shell,
         s.padding,
         // Owner's own business: a distinct electric-blue outline so it's easy to
@@ -408,11 +408,18 @@ function AppRankCard({
       <div
         id={panelId}
         className={cn(
-          "grid transition-[grid-template-rows] duration-300 ease-out",
+          "grid transition-[grid-template-rows] duration-300 ease-snappy",
           open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
-        <div className="overflow-hidden">
+        <div
+          className={cn(
+            // Fade the copy with the height so text never pops in at full
+            // opacity before the row has finished opening.
+            "overflow-hidden transition-opacity duration-300 ease-snappy",
+            open ? "opacity-100" : "opacity-0",
+          )}
+        >
           <p
             className={cn(
               "mt-3 border-t border-border/60 pt-3 text-sm text-muted-foreground",

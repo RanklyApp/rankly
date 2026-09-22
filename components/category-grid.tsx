@@ -24,11 +24,12 @@ export function CategoryGrid({ categories, className }: CategoryGridProps) {
           href={`/c/${c.slug}`}
           className={cn(
             "group flex items-start gap-3 rounded-lg border border-border bg-card p-4",
-            "transition-shadow hover:shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.05)]",
+            "transition-[transform,box-shadow,border-color] duration-200 ease-snappy",
+            "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_10px_28px_rgba(0,0,0,0.45)] active:translate-y-0",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
         >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground transition-colors duration-200 ease-snappy group-hover:border-primary/40 group-hover:text-primary">
             <DynamicIcon
               name={c.icon as IconName}
               className="size-4"

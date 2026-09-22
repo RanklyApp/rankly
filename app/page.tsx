@@ -33,14 +33,17 @@ export default async function HomePage() {
     <div>
       {/* CTA spans the full viewport width (not the hero's max-w-4xl) so the
           buttons sit at the far top-right, clear of the centered title. */}
-      <div className="flex justify-end px-4 pt-6 sm:px-8 sm:pt-8">
+      <div className="animate-enter flex justify-end px-4 pt-6 sm:px-8 sm:pt-8">
         <HeaderCta />
       </div>
 
       {/* Hero */}
       <section className="mx-auto max-w-4xl px-4 pb-16 pt-4 sm:pt-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+          <h1
+            className="animate-enter text-balance text-3xl font-semibold tracking-tight text-white sm:text-5xl"
+            style={{ animationDelay: "80ms" }}
+          >
             Encontrá la herramienta de IA que necesitás
           </h1>
         </div>

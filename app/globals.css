@@ -37,6 +37,16 @@
   --radius-xl: calc(var(--radius) * 1.4);
 }
 
+/* Shared motion curves (Emil Kowalski). Built-in CSS easings are too weak;
+ * these give UI its "snap". `ease-snappy` for enter/hover/press feedback,
+ * `ease-smooth` for on-screen movement/morphs. A plain (non-inline) @theme so
+ * Tailwind BOTH generates the `ease-snappy`/`ease-smooth` utilities AND emits
+ * the `--ease-*` custom properties to :root (used by .animate-enter below). */
+@theme {
+  --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-smooth: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
 /* Electric deep-blue palette. Dark-only for now (no light theme).
  * :root and .dark hold the same values so it renders correctly whether or not
  * next-themes has applied the `.dark` class (theme is force-dark in layout). */
@@ -130,5 +140,35 @@
   }
   .fp-fill::after {
     display: none;
+  }
+}
+
+/* One-time entrance for above-the-fold hero elements. Enters slightly below and
+ * transparent (never from nothing) with the shared snappy curve. `both` keeps
+ * the from-state before it runs so there is no flash of the final position. */
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-enter {
+  animation: enter-up 0.5s var(--ease-snappy) both;
+}
+
+/* Accessibility: honor reduced-motion globally. Movement/animation collapse to
+ * near-instant while opacity/color still resolve, so nothing appears broken. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

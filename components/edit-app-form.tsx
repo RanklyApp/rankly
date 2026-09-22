@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -147,6 +148,7 @@ export function EditAppForm({ appId, defaultValues, categories }: EditAppFormPro
 
       <div className="flex gap-3">
         <Button type="submit" disabled={submitting}>
+          {submitting && <Loader2 className="size-4 animate-spin" aria-hidden />}
           {submitting ? "Guardando…" : "Guardar cambios"}
         </Button>
         <Button

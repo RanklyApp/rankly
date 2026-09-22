@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useActionState } from "react";
 import { signInOwner, type LoginState } from "@/app/acceder/actions";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export function OwnerLoginForm() {
       )}
 
       <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+        {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
         {pending ? "Entrando…" : "Entrar"}
       </Button>
     </form>
