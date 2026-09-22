@@ -87,6 +87,10 @@
   }
   html {
     @apply font-sans;
+    /* Reserve the scrollbar gutter always, so centered layouts don't jump
+     * ~7px sideways when a taller view (e.g. the dashboard "Competencia" tab)
+     * makes the vertical scrollbar appear/disappear. */
+    scrollbar-gutter: stable;
   }
 }
 

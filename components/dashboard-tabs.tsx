@@ -4,10 +4,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type TabKey = "ranking" | "rewards" | "competition" | "mybiz";
+type TabKey = "rewards" | "competition" | "mybiz";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "ranking", label: "Ranking" },
   { key: "rewards", label: "Recompensas" },
   { key: "competition", label: "Competencia" },
   { key: "mybiz", label: "Mi Negocio" },
@@ -17,46 +16,42 @@ const TABS: { key: TabKey; label: string }[] = [
  * Horizontal tabbed sections for the owner panel. Only the active section's
  * content is mounted at a time. Each section's content is passed in as a slot so
  * the server page keeps owning the data/queries — this component is purely the
- * tab switcher (no ranking / accrual / bid logic here).
+ * tab switcher (no accrual / bid logic here).
  *
- * The selector is a gold/amber pill that slides between tabs via a shared-layout
- * animation (motion `layoutId`); a fainter pill trails the hovered tab. Honors
- * `prefers-reduced-motion` by snapping instead of sliding.
+ * Equal, static tab widths: the three tabs are `flex-1 basis-0` with `min-w-0`,
+ * so no track can grow past its 1/3 share even if the label is long (min-content
+ * can't push it). The active gold/amber pill slides between tabs via a
+ * shared-layout animation (`layoutId`); a fainter pill trails the hovered tab.
+ *
+ * Content switch is the simplest crossfade: the leaving panel fades out and the
+ * entering one fades in — no movement, scale, blur, or height animation, so
+ * nothing competes on the main thread. The pill keeps its own spring.
+ * `prefers-reduced-motion` snaps instantly.
  */
 export function DashboardTabs({
-  ranking,
   rewards,
   competition,
   myBusiness,
 }: {
-  ranking: ReactNode;
   rewards: ReactNode;
   competition: ReactNode;
   myBusiness: ReactNode;
 }) {
-  const [active, setActive] = useState<TabKey>("ranking");
+  const [active, setActive] = useState<TabKey>("rewards");
   const [hovered, setHovered] = useState<TabKey | null>(null);
   const reduce = useReducedMotion();
 
-  // Slide for the moving pills; snap when the user prefers reduced motion.
+  // Pill slide: a snappy spring so the amber indicator glides to the selected
+  // tab; snap instantly under reduced motion.
   const slide = reduce
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 380, damping: 32 };
+    : { type: "spring" as const, stiffness: 360, damping: 30 };
 
-  // Depth transition for the panel content: a gradual scale + fade. `easeInOut`
-  // keeps both ends soft so the crossfade never looks like a hard cut.
-  const depth = reduce
-    ? { duration: 0 }
-    : { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
-
-  // Same curve/length for the container's height (layout) animation, so the box
-  // resizes smoothly between tabs of different heights instead of snapping.
-  const sizeShift = reduce
-    ? { duration: 0 }
-    : { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
+  // Content switch: plain opacity crossfade. No movement / scale / blur, and the
+  // container height is NOT animated — nothing competes with this fade.
+  const fade = { duration: reduce ? 0 : 0.16, ease: "easeOut" as const };
 
   const panels: Record<TabKey, ReactNode> = {
-    ranking,
     rewards,
     competition,
     mybiz: myBusiness,
@@ -68,7 +63,7 @@ export function DashboardTabs({
         <div
           role="tablist"
           aria-label="Secciones del panel"
-          className="inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border bg-card/60 p-1"
+          className="flex w-full max-w-md items-center gap-1 rounded-full border border-border bg-card/60 p-1"
         >
           {TABS.map((t) => {
             const selected = active === t.key;
@@ -86,9 +81,14 @@ export function DashboardTabs({
                 onFocus={() => setHovered(t.key)}
                 onBlur={() => setHovered(null)}
                 className={cn(
-                  "relative shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  // flex-1 basis-0 + min-w-0 → all three tabs share one equal
+                  // width and no long label can expand its track (min-content
+                  // can't push it). The pill/underline geometry never shifts.
+                  "relative min-w-0 flex-1 basis-0 rounded-full px-3 py-2 text-center text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] focus-visible:ring-offset-0",
-                  selected ? "text-white" : "text-muted-foreground hover:text-white",
+                  selected
+                    ? "text-white"
+                    : "text-muted-foreground hover:text-white",
                 )}
               >
                 {/* Hover trail — only on non-active tabs so it never fights the
@@ -111,33 +111,32 @@ export function DashboardTabs({
                     transition={slide}
                   />
                 )}
-                <span className="relative z-10 whitespace-nowrap">{t.label}</span>
+                <span className="relative z-10 truncate">{t.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Depth transition. The outer box animates its own height (`layout`) so
-          switching between tabs of different sizes resizes smoothly. `popLayout`
-          takes the leaving panel out of flow so the entering one can crossfade
-          in over it (no gap/cut), while it sinks back (scale + fade). */}
-      <motion.div layout transition={sizeShift} className="relative w-full">
+      {/* `popLayout` takes the leaving panel out of flow so the entering one
+          fades in over it (crossfade, no gap). Height is not animated — it
+          settles to the new panel immediately. */}
+      <div className="relative w-full">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={active}
             role="tabpanel"
             id={`panel-${active}`}
             aria-labelledby={`tab-${active}`}
-            initial={reduce ? false : { opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-            transition={depth}
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={fade}
           >
             {panels[active]}
           </motion.div>
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 }

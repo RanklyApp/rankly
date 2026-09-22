@@ -147,10 +147,6 @@ export default async function DashboardPage() {
         ) : (
           <>
             <DashboardTabs
-              // Ranking: the ranked list, no per-business amounts shown here.
-              // No `stagger` here — the tab crossfade already animates the panel;
-              // a nested row stagger on top would double up and feel busy.
-              ranking={<AppList apps={ranking} />}
               // Recompensas: the accrued #1 time progress toward the plaques.
               rewards={
                 <div className="mx-auto max-w-md space-y-8">
