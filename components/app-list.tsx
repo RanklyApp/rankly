@@ -78,7 +78,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
   silver: {
     shell:
       "border-[#94A3B8] ring-1 ring-[#94A3B8]/40 bg-card/90 " +
-      "shadow-[0_2px_14px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)]",
+      "shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_14px_rgba(0,0,0,0.35)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_16px_36px_-10px_rgba(0,0,0,0.55)]",
     padding: "px-4 py-[18px]",
     logo: 48,
     rankColor: "text-[#E2E8F0]",
@@ -87,7 +87,7 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
   bronze: {
     shell:
       "border-[#CD7F32] ring-1 ring-[#CD7F32]/40 bg-card/90 " +
-      "shadow-[0_2px_14px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)]",
+      "shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_14px_rgba(0,0,0,0.35)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_16px_36px_-10px_rgba(0,0,0,0.55)]",
     padding: "p-4",
     logo: 44,
     rankColor: "text-[#CD7F32]",
@@ -95,8 +95,8 @@ const TIER_STYLES: Record<Tier, TierStyle> = {
   },
   mid: {
     shell:
-      "border-[#1E3A6E] bg-[#101F45]/90 " +
-      "shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.45)]",
+      "border-white/10 bg-[#101F45]/90 " +
+      "shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.35),0_10px_30px_-12px_rgba(0,0,0,0.5)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_6px_rgba(0,0,0,0.4),0_20px_44px_-14px_rgba(0,0,0,0.6)]",
     padding: "p-4",
     logo: 40,
     rankColor: "text-[#93A5C4]",
@@ -230,10 +230,12 @@ function AppRankCard({
   app,
   rank,
   showAmounts,
+  stagger,
 }: {
   app: AppListItem;
   rank: number;
   showAmounts?: boolean;
+  stagger?: boolean;
 }) {
   const tier = tierForRank(rank);
   const s = TIER_STYLES[tier];
@@ -247,9 +249,13 @@ function AppRankCard({
 
   return (
     <li
+      style={stagger ? ({ "--stagger-i": rank - 1 } as CSSProperties) : undefined}
       className={cn(
         "group relative flex flex-col rounded-xl border backdrop-blur-sm",
-        "transition-[transform,box-shadow,border-color,outline-color] duration-200 ease-snappy hover:-translate-y-0.5",
+        // Lift only on hover-capable pointers and when motion is allowed, so it
+        // never sticks after a tap on mobile and respects reduced-motion.
+        "transition-[transform,box-shadow,border-color,outline-color] duration-200 ease-snappy motion-safe:[@media(hover:hover)]:hover:-translate-y-0.5",
+        stagger && "stagger-item",
         s.shell,
         s.padding,
         // Owner's own business: a distinct electric-blue outline so it's easy to
@@ -448,9 +454,14 @@ function AppRankCard({
 export function AppList({
   apps,
   showAmounts,
+  stagger,
 }: {
   apps: AppListItem[];
   showAmounts?: boolean;
+  /** Animate rows in with a staggered entrance. Only use where the list mounts
+   *  fresh (e.g. a dashboard tab) — NOT on a live-filtered list, where changing
+   *  results would re-key rows and replay the animation on every keystroke. */
+  stagger?: boolean;
 }) {
   return (
     <ul className="flex flex-col gap-3">
@@ -460,6 +471,7 @@ export function AppList({
           app={app}
           rank={i + 1}
           showAmounts={showAmounts}
+          stagger={stagger}
         />
       ))}
     </ul>

@@ -1,4 +1,5 @@
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { Category } from "@/db/schema";
 import { cn } from "@/lib/utils";
@@ -18,14 +19,14 @@ export function CategoryGrid({ categories, className }: CategoryGridProps) {
         className,
       )}
     >
-      {categories.map((c) => (
+      {categories.map((c, i) => (
         <Link
           key={c.id}
           href={`/c/${c.slug}`}
+          style={{ "--stagger-i": i } as CSSProperties}
           className={cn(
-            "group flex items-start gap-3 rounded-lg border border-border bg-card p-4",
-            "transition-[transform,box-shadow,border-color] duration-200 ease-snappy",
-            "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_10px_28px_rgba(0,0,0,0.45)] active:translate-y-0",
+            "surface-premium lift stagger-item group flex items-start gap-3 rounded-lg p-4",
+            "hover:!border-primary/40",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
         >

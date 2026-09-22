@@ -160,15 +160,72 @@
   animation: enter-up 0.5s var(--ease-snappy) both;
 }
 
-/* Accessibility: honor reduced-motion globally. Movement/animation collapse to
- * near-instant while opacity/color still resolve, so nothing appears broken. */
+@layer components {
+  /* Premium raised surface: a top-lit gradient sheen over the card fill, a
+   * hairline highlight border, and a layered ambient+direct shadow so surfaces
+   * read as lit from above instead of flat #101F45 rectangles. Keeps the
+   * dark-blue palette — the sheen is white at 4-6% alpha, not a new color. */
+  .surface-premium {
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06),
+      rgba(255, 255, 255, 0) 45%
+    );
+    background-color: var(--card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.35),
+      0 10px 30px -12px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Light-3D hover: a small lift + deeper layered shadow + brighter rim. Gated
+   * to hover-capable pointers so it never sticks after a tap on touch; the
+   * translate is further gated to no-preference so reduced-motion users keep the
+   * shadow/border feedback without the movement. GPU-friendly (transform only). */
+  .lift {
+    transition:
+      transform 0.2s var(--ease-snappy),
+      box-shadow 0.2s var(--ease-snappy),
+      border-color 0.2s var(--ease-snappy);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .lift:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.4),
+        0 22px 48px -12px rgba(0, 0, 0, 0.65);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .lift:hover {
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  /* Staggered list/grid entrance. Each item sets --stagger-i (its index); the
+   * delay is capped at 8 steps so long lists never wait more than ~360ms. Enters
+   * slightly below and faded, never from nothing. Reduced-motion collapses it to
+   * instant via the global rule above (both-fill lands on the final state). */
+  .stagger-item {
+    opacity: 0;
+    animation: enter-up 0.45s var(--ease-snappy) both;
+    animation-delay: calc(min(var(--stagger-i, 0), 8) * 45ms);
+  }
+}
+
+/* Accessibility: honor reduced-motion. Collapse DECORATIVE keyframe animations
+ * (stagger, entrances, shimmer) to instant, but keep transitions intact so
+ * hover / focus / expand feedback still resolves — a blanket transition kill
+ * would remove useful state feedback. Movement-on-hover is gated separately in
+ * .lift so reduced-motion keeps the shadow change without the translate. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }

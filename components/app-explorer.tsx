@@ -61,7 +61,10 @@ export function AppExplorer({ apps, categories }: AppExplorerProps) {
 
   return (
     <>
-      <div className="mx-auto mt-8 flex max-w-xl items-center gap-2">
+      <div
+        className="animate-enter mx-auto mt-8 flex max-w-xl items-center gap-2"
+        style={{ animationDelay: "140ms" }}
+      >
         <div className="min-w-0 flex-1">
           <SearchBar value={query} onValueChange={setQuery} />
         </div>
@@ -73,7 +76,7 @@ export function AppExplorer({ apps, categories }: AppExplorerProps) {
         />
       </div>
 
-      <div className="mt-12">
+      <div className="animate-enter mt-12" style={{ animationDelay: "200ms" }}>
         {filtered.length > 0 ? (
           <AppList apps={filtered} />
         ) : (

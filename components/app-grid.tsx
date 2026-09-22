@@ -20,10 +20,11 @@ export function AppGrid({ apps, categoryNames, className }: AppGridProps) {
         className,
       )}
     >
-      {apps.map((app) => (
+      {apps.map((app, i) => (
         <AppCard
           key={app.id}
           app={app}
+          index={i}
           categoryName={categoryNames?.[app.categoryId]}
         />
       ))}

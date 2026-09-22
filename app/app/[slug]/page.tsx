@@ -89,7 +89,7 @@ export default async function AppPage({ params }: PageProps<"/app/[slug]">) {
         <span className="text-foreground">{app.name}</span>
       </nav>
 
-      <div className="flex flex-col gap-6 rounded-lg border border-border bg-card p-6 sm:flex-row sm:items-start">
+      <div className="surface-premium animate-enter flex flex-col gap-6 rounded-lg p-6 sm:flex-row sm:items-start">
         <AppLogo name={app.name} logoUrl={app.logoUrl} url={app.websiteUrl} size={64} />
 
         <div className="min-w-0 flex-1">

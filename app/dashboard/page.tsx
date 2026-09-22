@@ -104,7 +104,7 @@ export default async function DashboardPage() {
                 {allApps.map((app) => (
                 <li
                   key={app.id}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-card p-4"
+                  className="surface-premium flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg p-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -148,6 +148,8 @@ export default async function DashboardPage() {
           <>
             <DashboardTabs
               // Ranking: the ranked list, no per-business amounts shown here.
+              // No `stagger` here — the tab crossfade already animates the panel;
+              // a nested row stagger on top would double up and feel busy.
               ranking={<AppList apps={ranking} />}
               // Recompensas: the accrued #1 time progress toward the plaques.
               rewards={

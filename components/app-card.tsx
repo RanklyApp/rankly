@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { AppLogo } from "@/components/app-logo";
 import type { App } from "@/db/schema";
@@ -9,27 +10,29 @@ interface AppCardProps {
     "slug" | "name" | "tagline" | "logoUrl" | "plan" | "websiteUrl"
   >;
   categoryName?: string;
+  /** Position in its grid — drives the staggered entrance delay. */
+  index?: number;
   className?: string;
 }
 
-export function AppCard({ app, categoryName, className }: AppCardProps) {
+export function AppCard({ app, categoryName, index, className }: AppCardProps) {
   const isPaid = app.plan === "paid";
 
   return (
     <Link
       href={`/app/${app.slug}`}
+      style={
+        index !== undefined
+          ? ({ "--stagger-i": index } as CSSProperties)
+          : undefined
+      }
       className={cn(
-        "group relative flex flex-col gap-3 rounded-lg border bg-card p-4",
-        // Dark-tuned hover: lift + border highlight + real shadow (the old
-        // rgba(0,0,0,0.05) shadow was invisible on #0A1633). Snappy press reset.
-        "transition-[transform,box-shadow,border-color] duration-200 ease-snappy",
-        "hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(0,0,0,0.45)] active:translate-y-0",
+        // Premium raised surface + light-3D hover lift + staggered entrance.
+        "surface-premium lift stagger-item group relative flex flex-col gap-3 rounded-lg p-4",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // Paid businesses carry a subtle amber accent (the "Destacado" hue) —
         // no text label, so ranking stays driven by position, not a badge.
-        isPaid
-          ? "border-[#F59E0B]/45 hover:border-[#F59E0B]/70 hover:shadow-[0_10px_28px_rgba(245,158,11,0.2)]"
-          : "border-border hover:border-primary/40",
+        isPaid && "border-[#F59E0B]/45 hover:!border-[#F59E0B]/70",
         className,
       )}
     >
