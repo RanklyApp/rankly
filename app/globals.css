@@ -10,6 +10,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
+  --font-display: var(--font-display);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -96,15 +97,8 @@
 
 /* First-place progress fill (components/rewards-panel.tsx).
  * Amber/gold gradient with a soft glow, growing from 0 to its value on mount,
- * plus a discreet shimmer that sweeps across. `--fp-w` is set inline per bar. */
-@keyframes fp-grow {
-  from {
-    width: 0;
-  }
-  to {
-    width: var(--fp-w, 0%);
-  }
-}
+ * plus a discreet shimmer that sweeps across. `--fp-w` is set inline per bar.
+ * Width is static (always visible); only the shimmer animates. */
 @keyframes fp-shimmer {
   0% {
     transform: translateX(-140%);
@@ -114,15 +108,26 @@
     transform: translateX(360%);
   }
 }
+/* NOTE: no `position` here on purpose. This class is unlayered, so it would
+ * beat Tailwind's layered utilities — a `position: relative` would override the
+ * element's `absolute` and drop the fill out of place (height collapses to 0).
+ * The element supplies `absolute` + width inline. */
 .fp-fill {
-  position: relative;
   overflow: hidden;
-  width: var(--fp-w, 0%);
-  background-image: linear-gradient(90deg, #b45309 0%, #f59e0b 50%, #fbbf24 100%);
+  /* Richer amber pour: deep base, saturated core, bright crest — plus a top
+   * light band baked into the gradient so the fill reads convex. */
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(0, 0, 0, 0.12) 100%
+  ),
+    linear-gradient(90deg, #a3480a 0%, #f59e0b 48%, #fcd34d 100%);
   box-shadow:
-    0 0 10px 0 rgba(245, 158, 11, 0.55),
-    0 0 3px 0 rgba(251, 191, 36, 0.9);
-  animation: fp-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 6px rgba(120, 53, 15, 0.55),
+    0 0 20px 1px rgba(245, 158, 11, 0.6),
+    0 0 6px 0 rgba(251, 191, 36, 0.9);
 }
 .fp-fill::after {
   content: "";
@@ -144,6 +149,19 @@
   }
   .fp-fill::after {
     display: none;
+  }
+}
+
+/* Achievement plaque spin (components/plaque.tsx). A single 360° turn per
+ * press, driven by a transition (interruptible, retargets on rapid clicks)
+ * rather than a keyframe loop. Reduced motion snaps with no visible spin. */
+.plaque-spin {
+  transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .plaque-spin {
+    transition: none;
   }
 }
 

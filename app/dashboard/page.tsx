@@ -75,7 +75,7 @@ export default async function DashboardPage() {
 
       <section className="pb-16 pt-6 sm:pt-10">
         <header className={cn("mb-6", !isAdmin && "text-center")}>
-          <h1 className="text-balance text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          <h1 className="text-balance font-display text-4xl font-medium tracking-[-0.02em] text-white sm:text-5xl">
             {isAdmin ? "Administración del sitio" : "Panel del negocio"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
@@ -149,7 +149,10 @@ export default async function DashboardPage() {
             <DashboardTabs
               // Recompensas: the accrued #1 time progress toward the plaques.
               rewards={
-                <div className="space-y-16 py-4">
+                // items-center centers each width-capped panel WITHOUT mx-auto
+                // (mx-auto on a flex item shrink-wraps it). Big elements fill the
+                // space; multiple businesses stack with generous separation.
+                <div className="flex flex-col items-center gap-24 py-10">
                   {owned.map((a) => (
                     <RewardsPanel
                       key={a.id}
