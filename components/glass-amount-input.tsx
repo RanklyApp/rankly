@@ -28,7 +28,7 @@ export function GlassAmountInput({
       <span className="text-xl font-semibold text-sky-200/80">$</span>
       <input
         type="number"
-        min={5}
+        min={0}
         value={value}
         onChange={(e) => onValueChange(Number(e.target.value))}
         className="w-20 bg-transparent text-center text-3xl font-bold text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"

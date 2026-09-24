@@ -47,7 +47,7 @@ export interface BidState {
 
 /**
  * Owner sets/updates the daily "destacar" bid for one of their businesses.
- * Validates a whole-dollar amount (>= $5), verifies ownership, then delegates
+ * Validates a whole-dollar amount (>= $0; $0 = leave the paid section), verifies ownership, then delegates
  * to `applyBidChange` (which persists the desired amount and attempts the Dodo
  * off-session charge). The amount is stored regardless of whether the charge
  * fires — a missing mandate just means it won't rank until payment is set up.
