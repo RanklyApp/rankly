@@ -6,9 +6,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
 import { getSessionUser } from "@/lib/auth";
+import { createMandateCheckout, isDodoConfigured } from "@/lib/billing/dodo";
 import { applyBidChange } from "@/lib/billing/service";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { deleteApp } from "@/lib/mutations";
+import { siteUrl } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { bidDollarsSchema, dollarsToCents } from "@/lib/validations";
 
@@ -80,6 +82,7 @@ export async function setBidAction(
   revalidatePath("/dashboard");
 
   if (res.ok) return { ok: true };
+  // Kept below the payment-setup action so both share the ownership pattern.
   // The desired amount was still saved; explain why it isn't charging (yet).
   switch (res.reason) {
     case "no_mandate":
@@ -102,4 +105,59 @@ export async function setBidAction(
         notice: "Monto guardado, pero el cobro falló. Vamos a reintentar.",
       };
   }
+}
+
+/**
+ * Fase 1 — the real "add/update payment method" entry point. Starts a Dodo
+ * mandate-only checkout ($0, saves a reusable card) for one of the owner's
+ * businesses and redirects the browser to Dodo's hosted checkout. When the buyer
+ * finishes, Dodo returns them to `/api/billing/return?appId=…`, which captures
+ * the saved-card subscription (see that route). Replaces the temporary admin
+ * `billing-test?action=mandate` path for real users.
+ */
+export async function startPaymentSetupAction(formData: FormData): Promise<void> {
+  const user = await getSessionUser();
+  if (!user) redirect("/acceder");
+
+  const appId = formData.get("appId");
+  if (typeof appId !== "string" || !z.string().uuid().safeParse(appId).success) {
+    redirect("/dashboard?pago=error");
+  }
+
+  if (!isDodoConfigured()) redirect("/dashboard?pago=nocfg");
+
+  // Ownership guard + the fields the checkout needs (email to attach the
+  // customer, existing customer id to reuse instead of duplicating).
+  const { apps } = schema;
+  const owned = await getDb()
+    .select({
+      ownerEmail: apps.ownerEmail,
+      dodoCustomerId: apps.dodoCustomerId,
+    })
+    .from(apps)
+    .where(and(eq(apps.id, appId), eq(apps.ownerUserId, user.id)))
+    .limit(1);
+  const app = owned[0];
+  if (!app) redirect("/dashboard?pago=error");
+
+  // return_url carries only the appId; the return route re-authenticates via the
+  // session cookie and re-checks ownership, so no secret needs to ride along.
+  const returnUrl = `${siteUrl()}/api/billing/return?appId=${appId}`;
+
+  let checkoutUrl: string;
+  try {
+    const res = await createMandateCheckout({
+      customerId: app.dodoCustomerId ?? undefined,
+      customerEmail: app.ownerEmail,
+      returnUrl,
+      metadata: { app_id: appId },
+    });
+    checkoutUrl = res.checkoutUrl;
+  } catch (err) {
+    console.error("[dashboard] startPaymentSetup failed:", err);
+    redirect("/dashboard?pago=error");
+  }
+
+  // External redirect to Dodo's hosted checkout (redirect() supports absolute URLs).
+  redirect(checkoutUrl);
 }

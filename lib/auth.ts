@@ -58,6 +58,8 @@ export async function getOwnerAppById(
       dailyAmountCents: apps.dailyAmountCents,
       desiredDailyAmountCents: apps.desiredDailyAmountCents,
       dodoSubscriptionId: apps.dodoSubscriptionId,
+      dodoBillingCountry: apps.dodoBillingCountry,
+      billingAlertAt: apps.billingAlertAt,
       firstPlaceSecondsTotal: apps.firstPlaceSecondsTotal,
     })
     .from(apps)
@@ -96,6 +98,10 @@ export interface OwnerAppRow {
   desiredDailyAmountCents: number;
   /** Null until the owner authorizes a Dodo mandate — no mandate = no charge. */
   dodoSubscriptionId: string | null;
+  /** ISO 3166-1 alpha-2 country from the saved mandate (for the masked card). */
+  dodoBillingCountry: string | null;
+  /** Set when the last charge failed after all retries (app dropped to free). */
+  billingAlertAt: Date | null;
   /** Accrued seconds at the global #1 spot (gamification progress). */
   firstPlaceSecondsTotal: number;
 }
@@ -118,6 +124,8 @@ export async function getOwnerAppsWithCategory(
       dailyAmountCents: apps.dailyAmountCents,
       desiredDailyAmountCents: apps.desiredDailyAmountCents,
       dodoSubscriptionId: apps.dodoSubscriptionId,
+      dodoBillingCountry: apps.dodoBillingCountry,
+      billingAlertAt: apps.billingAlertAt,
       firstPlaceSecondsTotal: apps.firstPlaceSecondsTotal,
     })
     .from(apps)

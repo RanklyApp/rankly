@@ -8,6 +8,7 @@ import { DashboardTabs } from "@/components/dashboard-tabs";
 import { EditAppForm } from "@/components/edit-app-form";
 import { EmptyState } from "@/components/empty-state";
 import { HeaderCta } from "@/components/header-cta";
+import { PaymentMethodCard } from "@/components/payment-method-card";
 import { RewardsPanel } from "@/components/rewards-panel";
 import { getOwnerAppsWithCategory, getSessionUser } from "@/lib/auth";
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -31,10 +32,38 @@ export const metadata: Metadata = {
 // Per-user, never cached.
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+// Return-from-checkout notices (?pago=…), set by the mandate return handler
+// (app/api/billing/return) and by startPaymentSetupAction on failure.
+const PAGO_NOTICE: Record<
+  string,
+  { tone: "ok" | "error"; text: string }
+> = {
+  ok: {
+    tone: "ok",
+    text: "Método de pago guardado. Ya se puede cobrar tu puja y destacarte en el ranking.",
+  },
+  error: {
+    tone: "error",
+    text: "No pudimos guardar el método de pago. Volvé a intentarlo.",
+  },
+  nocfg: {
+    tone: "error",
+    text: "Los pagos todavía no están disponibles. Probá de nuevo más tarde.",
+  },
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await getSessionUser();
   // proxy.ts already gates this route; this is defense-in-depth.
   if (!user) redirect("/acceder");
+
+  const pagoParam = (await searchParams).pago;
+  const pagoNotice =
+    typeof pagoParam === "string" ? PAGO_NOTICE[pagoParam] : undefined;
 
   const owned = await getOwnerAppsWithCategory(user.id);
 
@@ -146,6 +175,18 @@ export default async function DashboardPage() {
           />
         ) : (
           <>
+            {pagoNotice && (
+              <div
+                className={cn(
+                  "mb-6 rounded-lg border p-3 text-center text-sm",
+                  pagoNotice.tone === "ok"
+                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                    : "border-destructive/40 bg-destructive/10 text-destructive",
+                )}
+              >
+                {pagoNotice.text}
+              </div>
+            )}
             <DashboardTabs
               // Recompensas: the accrued #1 time progress toward the plaques.
               rewards={
@@ -212,6 +253,12 @@ export default async function DashboardPage() {
                           description: a.description,
                         }}
                         categories={categoryOptions}
+                      />
+                      <PaymentMethodCard
+                        appId={a.id}
+                        hasCard={Boolean(a.dodoSubscriptionId)}
+                        billingCountry={a.dodoBillingCountry}
+                        alert={Boolean(a.billingAlertAt)}
                       />
                     </div>
                   ))}
