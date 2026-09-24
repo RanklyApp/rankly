@@ -189,10 +189,6 @@ export default async function DashboardPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-center text-sm text-muted-foreground">
-                      Cuánto puja por día cada negocio. Subí tu monto para superar
-                      a los que tenés por encima.
-                    </p>
                     <AppList apps={ranking} showAmounts />
                   </div>
                 </div>
