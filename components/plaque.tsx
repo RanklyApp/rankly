@@ -30,12 +30,21 @@ export function Plaque({
   label,
   unlocked,
   width,
+  className,
 }: {
   variant: PlaqueVariant;
   src: string;
   label: string;
   unlocked: boolean;
+  /** Intrinsic px, used for the Image ratio (avoids CLS) and as the max size. */
   width: number;
+  /**
+   * Sets the rendered size via the `--pw` custom property. All box math (halo,
+   * shadow, height) is derived from `--pw` in CSS, so a responsive value like
+   * `"[--pw:124px] sm:[--pw:160px]"` shrinks the whole plaque on small screens
+   * with no JS and no layout flash. Required — the box collapses without it.
+   */
+  className: string;
 }) {
   const [spins, setSpins] = useState(0);
   const height = Math.round(width * RATIO);
@@ -48,35 +57,36 @@ export function Plaque({
       className={cn(
         "group relative inline-flex items-center justify-center [perspective:900px]",
         "rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+        // Size is driven entirely by --pw (set via `className`) so it can scale
+        // down responsively without JS. Height keeps the ~10px shadow breathing
+        // room the fixed-px version had.
+        "w-[var(--pw)] h-[calc(var(--pw)*0.667_+_10px)]",
+        className,
       )}
-      style={{ width, height: height + 10 }}
     >
       {/* Neon halo behind THIS plaque — cool for silver, warm for gold. Always
           present (it's the plaque's own glow); brighter once unlocked. */}
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl transition-opacity duration-500",
+          "pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[calc(var(--pw)*1.5)] w-[calc(var(--pw)*1.5)] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl transition-opacity duration-500",
           unlocked ? "opacity-100" : "opacity-55",
         )}
         style={{
-          width: width * 1.5,
-          height: width * 1.5,
           background: `radial-gradient(circle, ${GLOW[variant]}, transparent 68%)`,
         }}
       />
       {/* Soft contact shadow grounding the plaque. */}
       <span
         aria-hidden
-        className="pointer-events-none absolute bottom-0 left-1/2 -z-10 h-2 -translate-x-1/2 rounded-[50%] bg-black/55 blur-md"
-        style={{ width: width * 0.66 }}
+        className="pointer-events-none absolute bottom-0 left-1/2 -z-10 h-2 w-[calc(var(--pw)*0.66)] -translate-x-1/2 rounded-[50%] bg-black/55 blur-md"
       />
       {/* The plaque itself: rest tilt + full-turn spin on each press. Always
           shown in its metal (gold vs silver stay distinct); locked only dims a
           touch — no grayscale, which would make both look the same. */}
       <span
         className={cn(
-          "plaque-spin block will-change-transform",
+          "plaque-spin block w-full will-change-transform",
           !unlocked && "opacity-75",
         )}
         style={{

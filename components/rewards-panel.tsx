@@ -36,9 +36,15 @@ function PlaqueSlot({
         src={PLAQUE_SRC[variant]}
         label={label}
         unlocked={unlocked}
-        // The 100-day gold plaque is the top prize — render it noticeably
-        // larger and more prominent than the 50-day silver.
+        // The 100-day gold plaque is the top prize — noticeably larger than the
+        // 50-day silver. Both shrink on mobile (via --pw) so the gold plaque,
+        // which floats at the 100% mark, doesn't overhang the screen edge.
         width={variant === "gold" ? 160 : 112}
+        className={
+          variant === "gold"
+            ? "[--pw:124px] sm:[--pw:160px]"
+            : "[--pw:92px] sm:[--pw:112px]"
+        }
       />
       <span
         className={cn(
@@ -79,7 +85,9 @@ export function RewardsPanel({
   const goldUnlocked = total >= FIRST_PLACE_GOLD_SECONDS;
 
   return (
-    <div className="flex w-full max-w-3xl flex-col items-center px-4 text-center">
+    // overflow-x-clip: a backstop so a plaque's faint outer halo can never add a
+    // horizontal scrollbar on small screens (positions are already inset to fit).
+    <div className="flex w-full max-w-3xl flex-col items-center overflow-x-clip px-4 text-center">
       {/* Big logo under a soft, diffuse amber halo — no hard ring, no strong
           neon (that belongs to the plaques). */}
       <div className="relative flex items-center justify-center">
@@ -112,8 +120,10 @@ export function RewardsPanel({
       </div>
 
       {/* Achievement meter — the dominant element. Plaques float over a wide,
-          thick, carved track. */}
-      <div className="mt-12 w-full px-6">
+          thick, carved track. Horizontal padding reserves room for the gold
+          plaque's half-width overhang at the 100% mark (responsive to its size)
+          so nothing spills past the panel on small screens. */}
+      <div className="mt-12 w-full px-16 sm:px-20">
         <div className="relative h-44">
           <PlaqueSlot
             variant="silver"
