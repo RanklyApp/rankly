@@ -125,6 +125,35 @@ export function dollarsToCents(dollars: number): number {
   return Math.round(dollars) * 100;
 }
 
+/** Lite owner edit — safe fields only; plan/montos/status/Dodo never accepted. */
+export const liteEditAppSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "El nombre es muy corto")
+    .max(60, "Máximo 60 caracteres"),
+  categoryId: z.string().uuid("Elegí una categoría"),
+  websiteUrl: z
+    .string()
+    .trim()
+    .url("Poné una URL válida (https://...)")
+    .max(300),
+  description: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().trim().max(600, "Máximo 600 caracteres").optional(),
+  ),
+  tagline: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().trim().max(80, "Máximo 80 caracteres").optional(),
+  ),
+  ownerEmail: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().trim().email("Email inválido").max(200).optional(),
+  ),
+});
+
+export type LiteEditAppInput = z.infer<typeof liteEditAppSchema>;
+
 /** URL-safe slug from arbitrary text. */
 export function slugify(input: string): string {
   return input

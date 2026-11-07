@@ -104,6 +104,42 @@ export async function updateApp(
     .where(and(eq(apps.id, appId), eq(apps.ownerUserId, ownerUserId)));
 }
 
+interface UpdateLiteAppInput {
+  name: string;
+  categoryId: string;
+  websiteUrl: string;
+  description?: string;
+  tagline?: string;
+  ownerEmail?: string;
+  logoUrl?: string;
+}
+
+/** Lite-dashboard edit: safe fields only. Never touches plan/montos/status/Dodo. */
+export async function updateLiteApp(
+  appId: string,
+  ownerUserId: string,
+  input: UpdateLiteAppInput,
+): Promise<void> {
+  const db = getDb();
+  const description = input.description?.trim() ?? "";
+  const tagline = (input.tagline?.trim() || description || input.name).slice(0, 80);
+
+  const values: Partial<typeof apps.$inferInsert> = {
+    name: input.name,
+    categoryId: input.categoryId,
+    websiteUrl: input.websiteUrl,
+    description,
+    tagline,
+  };
+  if (input.logoUrl) values.logoUrl = input.logoUrl;
+  if (input.ownerEmail) values.ownerEmail = input.ownerEmail;
+
+  await db
+    .update(apps)
+    .set(values)
+    .where(and(eq(apps.id, appId), eq(apps.ownerUserId, ownerUserId)));
+}
+
 export async function moderateApp(
   appId: string,
   action: "approve" | "reject",

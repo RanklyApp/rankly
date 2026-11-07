@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
  */
 function back(status: string): NextResponse {
   // 303 so the browser issues a clean GET to /dashboard after the checkout POST flow.
-  return NextResponse.redirect(`${siteUrl()}/dashboard?pago=${status}`, 303);
+  return NextResponse.redirect(`${siteUrl()}/dashboard/full?pago=${status}`, 303);
 }
 
 export async function GET(req: Request): Promise<NextResponse> {

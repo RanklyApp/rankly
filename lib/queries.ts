@@ -1,10 +1,10 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, ilike, ne, or, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { App, Category } from "@/db/schema";
 import * as demoData from "@/lib/demo-data";
 
-const { apps, categories, events } = schema;
+const { apps, categories, events, billingDays } = schema;
 
 // Logged once per process so the console isn't spammed on every request.
 let demoBannerLogged = false;
@@ -335,4 +335,40 @@ export async function recordClick(
     ]);
     return null;
   }, null);
+}
+
+/** Active billing days for an app — proxy for "days ranked". */
+export async function getActiveBillingDaysCount(appId: string): Promise<number> {
+  return safe(
+    async () => {
+      const rows = await getDb()
+        .select({ n: count() })
+        .from(billingDays)
+        .where(and(eq(billingDays.appId, appId), eq(billingDays.status, "active")));
+      return rows[0]?.n ?? 0;
+    },
+    0,
+    () => 0,
+  );
+}
+
+/** Current ranking position: approved apps with higher dailyAmountCents + 1. */
+export async function getAppCurrentRank(appId: string): Promise<number> {
+  return safe(
+    async () => {
+      const self = await getDb()
+        .select({ daily: apps.dailyAmountCents })
+        .from(apps)
+        .where(eq(apps.id, appId))
+        .limit(1);
+      if (!self[0]) return 99;
+      const rows = await getDb()
+        .select({ n: count() })
+        .from(apps)
+        .where(and(eq(apps.status, "approved"), gt(apps.dailyAmountCents, self[0].daily)));
+      return (rows[0]?.n ?? 0) + 1;
+    },
+    99,
+    () => 3,
+  );
 }

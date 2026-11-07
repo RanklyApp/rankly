@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt, isNotNull, or } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { App } from "@/db/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -104,6 +104,60 @@ export interface OwnerAppRow {
   billingAlertAt: Date | null;
   /** Accrued seconds at the global #1 spot (gamification progress). */
   firstPlaceSecondsTotal: number;
+}
+
+export interface LiteAppRow {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  description: string;
+  websiteUrl: string;
+  logoUrl: string;
+  categoryId: string;
+  categoryName: string;
+  status: "pending" | "approved" | "rejected";
+  ownerEmail: string;
+}
+
+/** All apps (any status) for lite dashboard — no billing columns in result. */
+export async function getOwnerAppsLite(userId: string): Promise<LiteAppRow[]> {
+  return getDb()
+    .select({
+      id: apps.id,
+      slug: apps.slug,
+      name: apps.name,
+      tagline: apps.tagline,
+      description: apps.description,
+      websiteUrl: apps.websiteUrl,
+      logoUrl: apps.logoUrl,
+      categoryId: apps.categoryId,
+      categoryName: categories.name,
+      status: apps.status,
+      ownerEmail: apps.ownerEmail,
+    })
+    .from(apps)
+    .innerJoin(categories, eq(apps.categoryId, categories.id))
+    .where(eq(apps.ownerUserId, userId));
+}
+
+/** Returns true if user owns any app with an active billing arrangement. */
+export async function ownerHasActiveBilling(userId: string): Promise<boolean> {
+  const rows = await getDb()
+    .select({ id: apps.id })
+    .from(apps)
+    .where(
+      and(
+        eq(apps.ownerUserId, userId),
+        or(
+          eq(apps.plan, "paid"),
+          gt(apps.desiredDailyAmountCents, 0),
+          isNotNull(apps.dodoSubscriptionId),
+        ),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 /** Approved apps owned by this user, with their category name (for the list). */

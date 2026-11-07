@@ -35,6 +35,7 @@ export async function deleteBusinessAction(formData: FormData): Promise<void> {
   }
   await deleteApp(appId);
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/full");
   revalidatePath("/");
 }
 
@@ -80,6 +81,7 @@ export async function setBidAction(
 
   const res = await applyBidChange(appId, dollarsToCents(parsed.data));
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/full");
 
   if (res.ok) return { ok: true };
   // Kept below the payment-setup action so both share the ownership pattern.
@@ -121,10 +123,10 @@ export async function startPaymentSetupAction(formData: FormData): Promise<void>
 
   const appId = formData.get("appId");
   if (typeof appId !== "string" || !z.string().uuid().safeParse(appId).success) {
-    redirect("/dashboard?pago=error");
+    redirect("/dashboard/full?pago=error");
   }
 
-  if (!isDodoConfigured()) redirect("/dashboard?pago=nocfg");
+  if (!isDodoConfigured()) redirect("/dashboard/full?pago=nocfg");
 
   // Ownership guard + the fields the checkout needs (email to attach the
   // customer, existing customer id to reuse instead of duplicating).
@@ -138,7 +140,7 @@ export async function startPaymentSetupAction(formData: FormData): Promise<void>
     .where(and(eq(apps.id, appId), eq(apps.ownerUserId, user.id)))
     .limit(1);
   const app = owned[0];
-  if (!app) redirect("/dashboard?pago=error");
+  if (!app) redirect("/dashboard/full?pago=error");
 
   // return_url carries only the appId; the return route re-authenticates via the
   // session cookie and re-checks ownership, so no secret needs to ride along.
@@ -155,7 +157,7 @@ export async function startPaymentSetupAction(formData: FormData): Promise<void>
     checkoutUrl = res.checkoutUrl;
   } catch (err) {
     console.error("[dashboard] startPaymentSetup failed:", err);
-    redirect("/dashboard?pago=error");
+    redirect("/dashboard/full?pago=error");
   }
 
   // External redirect to Dodo's hosted checkout (redirect() supports absolute URLs).
